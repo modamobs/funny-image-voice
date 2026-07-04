@@ -7,7 +7,17 @@ const OpenAI = require('openai');
 const db = require('../db');
 
 const router = express.Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+let _openai = null;
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY environment variable is missing or empty');
+  }
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 const audioStorage = multer.diskStorage({
   destination: path.join(__dirname, '..', '..', 'uploads', 'audio'),
@@ -24,6 +34,8 @@ router.post('/images/:imageId/ai-response', async (req, res) => {
     const base64Image = fs.readFileSync(imagePath).toString('base64');
     const ext = path.extname(image.filename).toLowerCase();
     const mimeType = ext === '.png' ? 'image/png' : ext === '.gif' ? 'image/gif' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+
+    const openai = getOpenAIClient();
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
