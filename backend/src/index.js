@@ -11,9 +11,11 @@ const commentsRouter = require('./routes/comments');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL, 'http://localhost:5173']
-  : ['http://localhost:5173'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://funny-image-voice.vercel.app',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+];
 
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
