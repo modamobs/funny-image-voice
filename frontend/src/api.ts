@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:3001/api' });
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+const api = axios.create({ baseURL: `${BASE}/api` });
 
 export const getImages = () => api.get('/images');
 export const getImage = (id: string) => api.get(`/images/${id}`);
@@ -22,7 +23,5 @@ export const getComments = (imageId: string) => api.get(`/images/${imageId}/comm
 export const postComment = (imageId: string, nickname: string, text: string) =>
   api.post(`/images/${imageId}/comments`, { nickname, text });
 
-export const AUDIO_URL = (filename: string) =>
-  `http://localhost:3001/uploads/audio/${filename}`;
-export const IMAGE_URL = (filename: string) =>
-  `http://localhost:3001/uploads/images/${filename}`;
+export const AUDIO_URL = (filename: string) => `${BASE}/uploads/audio/${filename}`;
+export const IMAGE_URL = (filename: string) => `${BASE}/uploads/images/${filename}`;
