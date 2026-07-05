@@ -1,15 +1,15 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/images/:imageId/comments', async (req, res) => {
+router.get('/images/:imageId/comments', optionalAuth, async (req, res) => {
   try {
     const image = await db.getImage(req.params.imageId);
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
-    res.json(await db.getComments(req.params.imageId));
+    res.json(await db.getComments(req.params.imageId, req.userId ?? null));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -54,6 +54,15 @@ router.delete('/comments/:id', requireAuth, async (req, res) => {
     const ok = await db.deleteComment(req.params.id, req.userId);
     if (!ok) return res.status(403).json({ error: '삭제 권한이 없습니다' });
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/comments/:id/like', requireAuth, async (req, res) => {
+  try {
+    const result = await db.toggleCommentLike(req.params.id, req.userId);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

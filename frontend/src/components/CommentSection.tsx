@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Comment } from '../types';
-import { getComments, postComment, updateComment, deleteComment } from '../api';
+import { getComments, postComment, updateComment, deleteComment, likeComment } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
 interface CommentItemProps {
@@ -13,9 +13,13 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
   const [saving, setSaving] = useState(false);
+  const [likes, setLikes] = useState(comment.likes ?? 0);
+  const [likedByMe, setLikedByMe] = useState(comment.liked_by_me ?? false);
+  const [liking, setLiking] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isOwner = myId !== null && comment.user_id === myId;
+  const canLike = myId !== null && !isOwner;
 
   const handleEdit = () => {
     setEditText(comment.text);
@@ -39,6 +43,25 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
     if (!confirm('댓글을 삭제할까요?')) return;
     await deleteComment(comment.id);
     onChanged();
+  };
+
+  const handleLike = async () => {
+    if (!canLike || liking) return;
+    setLiking(true);
+    // 낙관적 업데이트
+    setLikedByMe((prev) => !prev);
+    setLikes((prev) => likedByMe ? prev - 1 : prev + 1);
+    try {
+      const res = await likeComment(comment.id);
+      setLikes(res.data.likes);
+      setLikedByMe(res.data.liked);
+    } catch {
+      // 실패 시 롤백
+      setLikedByMe((prev) => !prev);
+      setLikes((prev) => likedByMe ? prev + 1 : prev - 1);
+    } finally {
+      setLiking(false);
+    }
   };
 
   return (
@@ -74,7 +97,28 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
           </div>
         </div>
       ) : (
-        <p style={{ margin: 0, fontSize: '14px', color: '#1f2937', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{comment.text}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <p style={{ margin: 0, fontSize: '14px', color: '#1f2937', lineHeight: 1.6, whiteSpace: 'pre-wrap', flex: 1 }}>{comment.text}</p>
+          <button
+            onClick={handleLike}
+            disabled={!canLike}
+            title={myId === null ? '로그인 후 좋아요 가능' : isOwner ? '내 댓글에는 좋아요 불가' : ''}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              marginLeft: '12px', flexShrink: 0,
+              padding: '4px 10px', borderRadius: '20px',
+              border: likedByMe ? '1.5px solid #f43f5e' : '1.5px solid #e5e7eb',
+              background: likedByMe ? '#fff1f2' : '#f9fafb',
+              color: likedByMe ? '#f43f5e' : '#9ca3af',
+              fontSize: '13px', fontWeight: 600,
+              cursor: canLike ? 'pointer' : 'default',
+              transition: 'all 0.15s',
+            }}
+          >
+            <span style={{ fontSize: '14px' }}>{likedByMe ? '❤️' : '🤍'}</span>
+            {likes > 0 && <span>{likes}</span>}
+          </button>
+        </div>
       )}
     </div>
   );

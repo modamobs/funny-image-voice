@@ -27,4 +27,6 @@ export interface Comment {
   nickname: string;
   text: string;
   created_at: string;
+  likes: number;
+  liked_by_me: boolean;
 }

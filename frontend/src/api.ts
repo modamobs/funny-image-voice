@@ -26,6 +26,8 @@ export const updateComment = (commentId: string, text: string) =>
   api.put(`/comments/${commentId}`, { text });
 export const deleteComment = (commentId: string) =>
   api.delete(`/comments/${commentId}`);
+export const likeComment = (commentId: string) =>
+  api.post(`/comments/${commentId}/like`);
 
 export const getMe = (token: string) =>
   axios.get(`${BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });

@@ -49,6 +49,12 @@ async function init() {
       count INTEGER DEFAULT 0,
       PRIMARY KEY (user_id, date)
     );
+
+    CREATE TABLE IF NOT EXISTS comment_likes (
+      comment_id TEXT NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (comment_id, user_id)
+    );
   `);
 }
 
@@ -98,10 +104,17 @@ const db = {
     return rows[0]?.votes ?? null;
   },
 
-  async getComments(imageId) {
+  async getComments(imageId, userId = null) {
     const { rows } = await pool.query(
-      'SELECT * FROM comments WHERE image_id = $1 ORDER BY created_at ASC',
-      [imageId]
+      `SELECT c.*,
+              COUNT(cl.user_id)::int AS likes,
+              BOOL_OR(cl.user_id = $2) AS liked_by_me
+       FROM comments c
+       LEFT JOIN comment_likes cl ON cl.comment_id = c.id
+       WHERE c.image_id = $1
+       GROUP BY c.id
+       ORDER BY c.created_at ASC`,
+      [imageId, userId]
     );
     return rows;
   },
@@ -152,6 +165,24 @@ const db = {
       [userId]
     );
     return rows[0]?.count ?? 0;
+  },
+
+  async toggleCommentLike(commentId, userId) {
+    const { rowCount } = await pool.query(
+      'DELETE FROM comment_likes WHERE comment_id = $1 AND user_id = $2',
+      [commentId, userId]
+    );
+    if (rowCount === 0) {
+      await pool.query(
+        'INSERT INTO comment_likes (comment_id, user_id) VALUES ($1, $2)',
+        [commentId, userId]
+      );
+    }
+    const { rows } = await pool.query(
+      'SELECT COUNT(*)::int AS likes FROM comment_likes WHERE comment_id = $1',
+      [commentId]
+    );
+    return { likes: rows[0].likes, liked: rowCount === 0 };
   },
 
   async incrementAiUsage(userId) {
