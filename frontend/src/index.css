@@ -17,3 +17,30 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* 호버 시 스크롤바 표시 */
+.hover-scrollbar {
+  scrollbar-width: none; /* Firefox */
+}
+.hover-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.hover-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hover-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.hover-scrollbar:hover {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+.hover-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+.hover-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

@@ -170,7 +170,7 @@ export default function CommentSection({ imageId }: Props) {
       </div>
 
       {/* 댓글 목록 (스크롤 영역) */}
-      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
+      <div ref={listRef} className="hover-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
         {comments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>
             첫 댓글을 남겨보세요!
