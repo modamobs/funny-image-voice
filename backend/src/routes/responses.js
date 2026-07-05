@@ -1,42 +1,28 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const OpenAI = require('openai');
 const db = require('../db');
+const { uploadToR2 } = require('../storage');
 
 const router = express.Router();
 
 let _openai = null;
-function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable is missing or empty');
-  }
-  if (!_openai) {
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return _openai;
 }
 
-const audioStorage = multer.diskStorage({
-  destination: path.join(__dirname, '..', '..', 'uploads', 'audio'),
-  filename: (req, file, cb) => cb(null, `${uuidv4()}.webm`),
-});
-const uploadAudio = multer({ storage: audioStorage, limits: { fileSize: 5 * 1024 * 1024 } });
+const uploadAudio = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.post('/images/:imageId/ai-response', async (req, res) => {
   try {
     const image = await db.getImage(req.params.imageId);
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
 
-    const imagePath = path.join(__dirname, '..', '..', 'uploads', 'images', image.filename);
-    const base64Image = fs.readFileSync(imagePath).toString('base64');
-    const ext = path.extname(image.filename).toLowerCase();
-    const mimeType = ext === '.png' ? 'image/png' : ext === '.gif' ? 'image/gif' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+    const openai = getOpenAI();
 
-    const openai = getOpenAIClient();
-
+    // R2 URL을 GPT-4o Vision에 직접 전달
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -51,7 +37,7 @@ router.post('/images/:imageId/ai-response', async (req, res) => {
         {
           role: 'user',
           content: [
-            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Image}` } },
+            { type: 'image_url', image_url: { url: image.filename } },
             { type: 'text', text: '이 이미지에 웃긴 멘트를 달아주세요!' },
           ],
         },
@@ -68,14 +54,14 @@ router.post('/images/:imageId/ai-response', async (req, res) => {
       speed: 1.1,
     });
 
-    const audioFilename = `${uuidv4()}.mp3`;
-    const audioPath = path.join(__dirname, '..', '..', 'uploads', 'audio', audioFilename);
-    fs.writeFileSync(audioPath, Buffer.from(await ttsResponse.arrayBuffer()));
+    const audioKey = `audio/${uuidv4()}.mp3`;
+    const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
+    const audioUrl = await uploadToR2(audioKey, audioBuffer, 'audio/mpeg');
 
     const responseId = uuidv4();
-    await db.addResponse({ id: responseId, image_id: req.params.imageId, type: 'ai', audio_filename: audioFilename, ai_text: funnyText });
+    await db.addResponse({ id: responseId, image_id: req.params.imageId, type: 'ai', audio_filename: audioUrl, ai_text: funnyText });
 
-    res.json({ id: responseId, type: 'ai', ai_text: funnyText, audio_filename: audioFilename });
+    res.json({ id: responseId, type: 'ai', ai_text: funnyText, audio_filename: audioUrl });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'AI 응답 생성 실패: ' + err.message });
@@ -88,10 +74,13 @@ router.post('/images/:imageId/user-response', uploadAudio.single('audio'), async
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
     if (!req.file) return res.status(400).json({ error: '오디오 파일이 없습니다' });
 
-    const responseId = uuidv4();
-    await db.addResponse({ id: responseId, image_id: req.params.imageId, type: 'user', audio_filename: req.file.filename });
+    const audioKey = `audio/${uuidv4()}.webm`;
+    const audioUrl = await uploadToR2(audioKey, req.file.buffer, 'audio/webm');
 
-    res.json({ id: responseId, type: 'user', audio_filename: req.file.filename });
+    const responseId = uuidv4();
+    await db.addResponse({ id: responseId, image_id: req.params.imageId, type: 'user', audio_filename: audioUrl });
+
+    res.json({ id: responseId, type: 'user', audio_filename: audioUrl });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
