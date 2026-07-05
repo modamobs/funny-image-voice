@@ -9,7 +9,7 @@ const router = express.Router();
 
 let _openai = null;
 function getOpenAI() {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 25000 });
   return _openai;
 }
 
@@ -24,7 +24,7 @@ router.post('/images/:imageId/ai-response', async (req, res) => {
 
     // R2 URL을 GPT-4o Vision에 직접 전달
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
