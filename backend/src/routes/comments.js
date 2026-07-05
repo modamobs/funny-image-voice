@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get('/images/:imageId/comments', async (req, res) => {
   }
 });
 
-router.post('/images/:imageId/comments', async (req, res) => {
+router.post('/images/:imageId/comments', requireAuth, async (req, res) => {
   try {
     const { nickname, text } = req.body;
     if (!text?.trim()) return res.status(400).json({ error: '댓글 내용을 입력해주세요' });

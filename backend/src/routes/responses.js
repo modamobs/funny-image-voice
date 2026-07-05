@@ -4,6 +4,9 @@ const { v4: uuidv4 } = require('uuid');
 const OpenAI = require('openai');
 const db = require('../db');
 const { uploadToR2 } = require('../storage');
+const { requireAuth } = require('../middleware/auth');
+
+const AI_DAILY_LIMIT = 5;
 
 const router = express.Router();
 
@@ -21,8 +24,13 @@ function getOpenAI() {
 
 const uploadAudio = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.post('/images/:imageId/ai-response', async (req, res) => {
+router.post('/images/:imageId/ai-response', requireAuth, async (req, res) => {
   try {
+    const usage = await db.getAiUsageToday(req.userId);
+    if (usage >= AI_DAILY_LIMIT) {
+      return res.status(429).json({ error: `AI 멘트는 하루 ${AI_DAILY_LIMIT}회까지만 생성할 수 있습니다` });
+    }
+
     const image = await db.getImage(req.params.imageId);
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
 
@@ -60,6 +68,8 @@ router.post('/images/:imageId/ai-response', async (req, res) => {
       speed: 1.1,
     });
 
+    await db.incrementAiUsage(req.userId);
+
     const audioKey = `audio/${uuidv4()}.mp3`;
     const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
     const audioUrl = await uploadToR2(audioKey, audioBuffer, 'audio/mpeg');
@@ -74,7 +84,7 @@ router.post('/images/:imageId/ai-response', async (req, res) => {
   }
 });
 
-router.post('/images/:imageId/user-response', uploadAudio.single('audio'), async (req, res) => {
+router.post('/images/:imageId/user-response', requireAuth, uploadAudio.single('audio'), async (req, res) => {
   try {
     const image = await db.getImage(req.params.imageId);
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });

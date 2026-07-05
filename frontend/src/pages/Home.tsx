@@ -2,12 +2,14 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getImages, uploadImage, IMAGE_URL } from '../api';
 import type { ImageItem } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Home() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { user, loading, login, logout } = useAuth();
 
   const load = async () => {
     const res = await getImages();
@@ -31,9 +33,29 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       {/* 헤더 */}
-      <div style={{ background: '#4338ca', padding: '24px', textAlign: 'center', color: '#fff' }}>
-        <h1 style={{ margin: 0, fontSize: '28px' }}>🎤 이미지 개그 대결</h1>
-        <p style={{ margin: '8px 0 0', opacity: 0.8 }}>이미지를 올리고 웃긴 멘트를 달아보세요!</p>
+      <div style={{ background: '#4338ca', padding: '20px 24px', color: '#fff' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '24px' }}>🎤 이미지 개그 대결</h1>
+            <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: '14px' }}>이미지를 올리고 웃긴 멘트를 달아보세요!</p>
+          </div>
+          {!loading && (
+            user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src={user.picture} alt={user.name} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)' }} />
+                <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>
+                <button onClick={logout} style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '13px', cursor: 'pointer' }}>
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button onClick={login} style={{ padding: '8px 20px', borderRadius: '20px', border: 'none', background: '#fff', color: '#4338ca', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
+                Google 로그인
+              </button>
+            )
+          )}
+        </div>
       </div>
 
       {/* 업로드 버튼 */}

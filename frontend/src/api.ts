@@ -23,6 +23,14 @@ export const getComments = (imageId: string) => api.get(`/images/${imageId}/comm
 export const postComment = (imageId: string, nickname: string, text: string) =>
   api.post(`/images/${imageId}/comments`, { nickname, text });
 
+export const getMe = (token: string) =>
+  axios.get(`${BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+
+export const setAuthToken = (token: string | null) => {
+  if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  else delete api.defaults.headers.common['Authorization'];
+};
+
 // filename이 이미 R2 전체 URL이면 그대로, 아니면 로컬 서버 경로로
 export const AUDIO_URL = (filename: string) =>
   filename.startsWith('http') ? filename : `${BASE}/uploads/audio/${filename}`;

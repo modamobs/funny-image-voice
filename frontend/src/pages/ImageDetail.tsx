@@ -5,11 +5,13 @@ import type { ImageDetail as ImageDetailType } from '../types';
 import RecordButton from '../components/RecordButton';
 import ResponseCard from '../components/ResponseCard';
 import CommentSection from '../components/CommentSection';
+import { useAuth } from '../hooks/useAuth';
 
 export default function ImageDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [data, setData] = useState<ImageDetailType | null>(null);
+  const { user, login } = useAuth();
   const [aiLoading, setAiLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -73,35 +75,41 @@ export default function ImageDetail() {
         </div>
 
         {/* 액션 버튼 */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
-          <button
-            onClick={handleAiResponse}
-            disabled={aiLoading}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '50px',
-              border: 'none',
-              background: aiLoading ? '#9ca3af' : '#f59e0b',
-              color: '#fff',
-              fontSize: '16px',
-              cursor: aiLoading ? 'not-allowed' : 'pointer',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            {aiLoading ? '⏳ AI 생각 중...' : '🤖 AI 멘트 생성'}
-          </button>
+        {!user ? (
+          <div style={{ marginBottom: '32px', padding: '16px', background: '#fff', borderRadius: '12px', textAlign: 'center', border: '2px dashed #e5e7eb' }}>
+            <p style={{ margin: '0 0 12px', color: '#6b7280' }}>AI 멘트 생성과 녹음은 로그인이 필요합니다</p>
+            <button onClick={login} style={{ padding: '10px 24px', borderRadius: '20px', border: 'none', background: '#4338ca', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
+              Google 로그인
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px', alignItems: 'center' }}>
+            <button
+              onClick={handleAiResponse}
+              disabled={aiLoading}
+              style={{
+                padding: '12px 24px',
+                borderRadius: '50px',
+                border: 'none',
+                background: aiLoading ? '#9ca3af' : '#f59e0b',
+                color: '#fff',
+                fontSize: '16px',
+                cursor: aiLoading ? 'not-allowed' : 'pointer',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {aiLoading ? '⏳ AI 생각 중...' : '🤖 AI 멘트 생성'}
+            </button>
+            <span style={{ fontSize: '13px', color: '#9ca3af' }}>오늘 {user.ai_usage_today}/5회 사용</span>
 
-          <RecordButton onRecordingComplete={handleRecording} disabled={uploading} />
-
-          {uploading && (
-            <span style={{ display: 'flex', alignItems: 'center', color: '#6b7280', fontSize: '14px' }}>
-              업로드 중...
-            </span>
-          )}
-        </div>
+            <RecordButton onRecordingComplete={handleRecording} disabled={uploading} />
+            {uploading && <span style={{ color: '#6b7280', fontSize: '14px' }}>업로드 중...</span>}
+          </div>
+        )}
 
         {/* 응답 목록 */}
         <h3 style={{ margin: '0 0 16px', color: '#111827' }}>
