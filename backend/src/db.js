@@ -32,6 +32,8 @@ async function init() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
+    ALTER TABLE comments ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id);
+
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       google_id TEXT UNIQUE NOT NULL,
@@ -104,12 +106,28 @@ const db = {
     return rows;
   },
 
-  async addComment({ id, image_id, nickname, text }) {
+  async addComment({ id, image_id, user_id, nickname, text }) {
     const { rows } = await pool.query(
-      'INSERT INTO comments (id, image_id, nickname, text) VALUES ($1, $2, $3, $4) RETURNING *',
-      [id, image_id, nickname, text]
+      'INSERT INTO comments (id, image_id, user_id, nickname, text) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [id, image_id, user_id, nickname, text]
     );
     return rows[0];
+  },
+
+  async updateComment(id, userId, text) {
+    const { rows } = await pool.query(
+      'UPDATE comments SET text = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+      [text, id, userId]
+    );
+    return rows[0] ?? null;
+  },
+
+  async deleteComment(id, userId) {
+    const { rowCount } = await pool.query(
+      'DELETE FROM comments WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    return rowCount > 0;
   },
 
   async upsertUser({ id, google_id, email, name, picture }) {

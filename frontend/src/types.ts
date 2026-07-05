@@ -23,6 +23,7 @@ export interface ImageDetail extends ImageItem {
 export interface Comment {
   id: string;
   image_id: string;
+  user_id: string | null;
   nickname: string;
   text: string;
   created_at: string;

@@ -27,10 +27,33 @@ router.post('/images/:imageId/comments', requireAuth, async (req, res) => {
     const comment = await db.addComment({
       id: uuidv4(),
       image_id: req.params.imageId,
+      user_id: req.userId,
       nickname: user?.name ?? '익명',
       text: text.trim(),
     });
     res.json(comment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/comments/:id', requireAuth, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text?.trim()) return res.status(400).json({ error: '내용을 입력해주세요' });
+    const comment = await db.updateComment(req.params.id, req.userId, text.trim());
+    if (!comment) return res.status(403).json({ error: '수정 권한이 없습니다' });
+    res.json(comment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/comments/:id', requireAuth, async (req, res) => {
+  try {
+    const ok = await db.deleteComment(req.params.id, req.userId);
+    if (!ok) return res.status(403).json({ error: '삭제 권한이 없습니다' });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

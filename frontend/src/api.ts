@@ -22,6 +22,10 @@ export const vote = (responseId: string) => api.post(`/responses/${responseId}/v
 export const getComments = (imageId: string) => api.get(`/images/${imageId}/comments`);
 export const postComment = (imageId: string, nickname: string, text: string) =>
   api.post(`/images/${imageId}/comments`, { nickname, text });
+export const updateComment = (commentId: string, text: string) =>
+  api.put(`/comments/${commentId}`, { text });
+export const deleteComment = (commentId: string) =>
+  api.delete(`/comments/${commentId}`);
 
 export const getMe = (token: string) =>
   axios.get(`${BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });

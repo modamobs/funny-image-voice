@@ -1,7 +1,84 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Comment } from '../types';
-import { getComments, postComment } from '../api';
+import { getComments, postComment, updateComment, deleteComment } from '../api';
 import { useAuth } from '../hooks/useAuth';
+
+interface CommentItemProps {
+  comment: Comment;
+  myId: string | null;
+  onChanged: () => void;
+}
+
+function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(comment.text);
+  const [saving, setSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const isOwner = myId !== null && comment.user_id === myId;
+
+  const handleEdit = () => {
+    setEditText(comment.text);
+    setEditing(true);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const handleSave = async () => {
+    if (!editText.trim()) return;
+    setSaving(true);
+    try {
+      await updateComment(comment.id, editText.trim());
+      setEditing(false);
+      onChanged();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('댓글을 삭제할까요?')) return;
+    await deleteComment(comment.id);
+    onChanged();
+  };
+
+  return (
+    <div style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontWeight: 700, fontSize: '13px', color: '#4338ca' }}>{comment.nickname}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '11px', color: '#9ca3af' }}>
+            {new Date(comment.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </span>
+          {isOwner && !editing && (
+            <>
+              <button onClick={handleEdit} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer' }}>수정</button>
+              <button onClick={handleDelete} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #fca5a5', background: '#fff1f2', color: '#ef4444', cursor: 'pointer' }}>삭제</button>
+            </>
+          )}
+        </div>
+      </div>
+      {editing ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <textarea
+            ref={textareaRef}
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            rows={3}
+            style={{ padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #6366f1', fontSize: '14px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
+          />
+          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+            <button onClick={() => setEditing(false)} style={{ padding: '6px 14px', borderRadius: '16px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', fontSize: '13px', cursor: 'pointer' }}>취소</button>
+            <button onClick={handleSave} disabled={saving || !editText.trim()} style={{ padding: '6px 14px', borderRadius: '16px', border: 'none', background: saving || !editText.trim() ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: saving || !editText.trim() ? 'not-allowed' : 'pointer' }}>
+              {saving ? '저장 중...' : '저장'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p style={{ margin: 0, fontSize: '14px', color: '#1f2937', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{comment.text}</p>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   imageId: string;
@@ -93,15 +170,7 @@ export default function CommentSection({ imageId }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {comments.map((c) => (
-            <div key={c.id} style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '14px' }}>{c.nickname}</span>
-                <span style={{ color: '#9ca3af', fontSize: '12px' }}>
-                  {new Date(c.created_at).toLocaleString('ko-KR')}
-                </span>
-              </div>
-              <p style={{ margin: 0, color: '#374151', fontSize: '15px', lineHeight: '1.5' }}>{c.text}</p>
-            </div>
+            <CommentItem key={c.id} comment={c} myId={user?.id ?? null} onChanged={load} />
           ))}
         </div>
       )}
