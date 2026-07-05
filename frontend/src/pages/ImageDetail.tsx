@@ -129,7 +129,7 @@ export default function ImageDetail() {
 
         {/* 오른쪽: 댓글 (입력창 하단 고정, 목록만 스크롤) */}
         <div style={{ width: 'clamp(300px, 35vw, 420px)', flexShrink: 0, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
-          {id && <CommentSection imageId={id} />}
+          {id && <CommentSection imageId={id} onResponseAdded={load} />}
         </div>
 
       </div>

@@ -18,6 +18,20 @@ body {
   min-height: 100vh;
 }
 
+/* 녹음 중 깜빡이는 빨간 점 */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+.rec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: blink 1s ease-in-out infinite;
+}
+
 /* 호버 시 스크롤바 표시 — 공간은 항상 확보해서 레이아웃 밀림 없음 */
 .hover-scrollbar {
   scrollbar-width: thin;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Comment } from '../types';
-import { getComments, postComment, updateComment, deleteComment, likeComment } from '../api';
+import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
 interface CommentItemProps {
@@ -126,14 +126,23 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
 
 interface Props {
   imageId: string;
+  onResponseAdded?: () => void;
 }
 
-export default function CommentSection({ imageId }: Props) {
+export default function CommentSection({ imageId, onResponseAdded }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const { user, login } = useAuth();
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // 녹음 상태
+  const [inputMode, setInputMode] = useState<'text' | 'recording'>('text');
+  const [recordingSec, setRecordingSec] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = async () => {
     const res = await getComments(imageId);
@@ -150,7 +159,6 @@ export default function CommentSection({ imageId }: Props) {
       await postComment(imageId, '', text);
       setText('');
       await load();
-      // 새 댓글 등록 후 목록 맨 아래로 스크롤
       setTimeout(() => {
         if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
       }, 50);
@@ -158,6 +166,54 @@ export default function CommentSection({ imageId }: Props) {
       setSubmitting(false);
     }
   };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => chunksRef.current.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setUploading(true);
+        try {
+          await uploadUserResponse(imageId, blob);
+          onResponseAdded?.();
+        } finally {
+          setUploading(false);
+          setInputMode('text');
+          setRecordingSec(0);
+        }
+      };
+      mr.start();
+      setInputMode('recording');
+      setRecordingSec(0);
+      timerRef.current = setInterval(() => setRecordingSec((s) => s + 1), 1000);
+    } catch {
+      alert('마이크 권한이 필요합니다.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    mediaRecorderRef.current?.stop();
+  };
+
+  const cancelRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    mediaRecorderRef.current?.stream?.getTracks().forEach((t) => t.stop());
+    if (mediaRecorderRef.current?.state !== 'inactive') {
+      // onstop이 호출되지 않도록 핸들러 제거 후 중단
+      mediaRecorderRef.current!.onstop = null;
+      mediaRecorderRef.current?.stop();
+    }
+    setInputMode('text');
+    setRecordingSec(0);
+  };
+
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -193,28 +249,63 @@ export default function CommentSection({ imageId }: Props) {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit}>
+          <>
+            {/* 작성자 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <img src={user.picture} alt={user.name} style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0 }} />
               <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '13px' }}>{user.name}</span>
             </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-              <textarea
-                placeholder="댓글 추가..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={2}
-                style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5 }}
-              />
-              <button
-                type="submit"
-                disabled={submitting || !text.trim()}
-                style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', background: submitting || !text.trim() ? '#d1d5db' : '#6366f1', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-              >
-                {submitting ? '...' : '등록'}
-              </button>
-            </div>
-          </form>
+
+            {inputMode === 'recording' ? (
+              /* 녹음 모드 */
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #fca5a5', background: '#fff7f7' }}>
+                <span className="rec-dot" />
+                <span style={{ flex: 1, fontSize: '14px', fontWeight: 600, color: '#ef4444' }}>
+                  {uploading ? '업로드 중...' : `녹음 중  ${fmt(recordingSec)}`}
+                </span>
+                {!uploading && (
+                  <>
+                    <button onClick={stopRecording} title="중지 및 업로드" style={{ padding: '6px 12px', borderRadius: '16px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                      ■ 중지
+                    </button>
+                    <button onClick={cancelRecording} title="취소" style={{ padding: '6px 10px', borderRadius: '16px', border: '1px solid #e5e7eb', background: '#f9fafb', color: '#6b7280', fontSize: '12px', cursor: 'pointer' }}>
+                      ✕
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              /* 텍스트 모드 */
+              <form onSubmit={handleSubmit}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                  <textarea
+                    placeholder="댓글 추가..."
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    rows={2}
+                    style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5 }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      title="음성으로 멘트 남기기"
+                      style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid #e5e7eb', background: '#f9fafb', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      🎤
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || !text.trim()}
+                      style={{ padding: '6px 12px', borderRadius: '16px', border: 'none', background: submitting || !text.trim() ? '#d1d5db' : '#6366f1', color: '#fff', fontWeight: 700, fontSize: '12px', cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer' }}
+                    >
+                      {submitting ? '...' : '등록'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </>
         )}
       </div>
 
