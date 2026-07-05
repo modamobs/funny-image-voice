@@ -18,15 +18,16 @@ body {
   min-height: 100vh;
 }
 
-/* 호버 시 스크롤바 표시 */
+/* 호버 시 스크롤바 표시 — 공간은 항상 확보해서 레이아웃 밀림 없음 */
 .hover-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  scrollbar-gutter: stable; /* 스크롤바 공간 미리 확보 → 레이아웃 밀림 방지 */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent; /* Firefox: 공간 확보, thumb 투명 */
+}
+.hover-scrollbar:hover {
+  scrollbar-color: #d1d5db transparent;
 }
 .hover-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  opacity: 0;
-  transition: opacity 0.2s;
+  width: 6px; /* Chrome: 항상 6px 공간 확보 */
 }
 .hover-scrollbar::-webkit-scrollbar-track {
   background: transparent;
@@ -34,10 +35,7 @@ body {
 .hover-scrollbar::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 3px;
-}
-.hover-scrollbar:hover {
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
+  transition: background 0.2s;
 }
 .hover-scrollbar:hover::-webkit-scrollbar-thumb {
   background: #d1d5db;
