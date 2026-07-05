@@ -9,7 +9,13 @@ const router = express.Router();
 
 let _openai = null;
 function getOpenAI() {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 25000 });
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      timeout: 25000,
+      defaultHeaders: { 'Accept-Encoding': 'identity' },
+    });
+  }
   return _openai;
 }
 
