@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Comment } from '../types';
-import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse } from '../api';
+import type { Comment, Response } from '../types';
+import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, AUDIO_URL } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
 interface CommentItemProps {
@@ -124,12 +124,46 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
   );
 }
 
+// 음성 응답 카드 (피드용 컴팩트 버전)
+function VoiceItem({ response }: { response: Response }) {
+  const [votes, setVotes] = useState(response.votes);
+  const [voted, setVoted] = useState(false);
+  const isAi = response.type === 'ai';
+
+  const handleVote = async () => {
+    if (voted) return;
+    const res = await vote(response.id);
+    setVotes(res.data.votes);
+    setVoted(true);
+  };
+
+  return (
+    <div style={{ background: isAi ? '#f0f4ff' : '#f0fdf4', border: `1.5px solid ${isAi ? '#a5b4fc' : '#86efac'}`, borderRadius: '12px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '16px' }}>{isAi ? '🤖' : '👤'}</span>
+        <span style={{ fontWeight: 700, fontSize: '13px', color: isAi ? '#4338ca' : '#16a34a' }}>{isAi ? 'AI 멘트' : '유저 녹음'}</span>
+        <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#9ca3af' }}>
+          {new Date(response.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+      {response.ai_text && (
+        <p style={{ margin: 0, fontStyle: 'italic', color: '#374151', fontSize: '13px' }}>"{response.ai_text}"</p>
+      )}
+      <audio controls src={AUDIO_URL(response.audio_filename)} style={{ width: '100%', height: '32px' }} />
+      <button onClick={handleVote} disabled={voted} style={{ alignSelf: 'flex-start', padding: '3px 12px', borderRadius: '20px', border: `1.5px solid ${voted ? '#f59e0b' : '#d1d5db'}`, background: voted ? '#fef3c7' : '#fff', cursor: voted ? 'default' : 'pointer', fontSize: '12px', fontWeight: 600, color: '#374151' }}>
+        👍 {votes}
+      </button>
+    </div>
+  );
+}
+
 interface Props {
   imageId: string;
+  responses: Response[];
   onResponseAdded?: () => void;
 }
 
-export default function CommentSection({ imageId, onResponseAdded }: Props) {
+export default function CommentSection({ imageId, responses, onResponseAdded }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const { user, login } = useAuth();
   const [text, setText] = useState('');
@@ -221,20 +255,27 @@ export default function CommentSection({ imageId, onResponseAdded }: Props) {
       {/* 헤더 */}
       <div style={{ padding: '16px 20px 12px', flexShrink: 0, borderBottom: '1px solid #f3f4f6' }}>
         <h3 style={{ margin: 0, color: '#111827', fontSize: '16px', fontWeight: 700 }}>
-          댓글 <span style={{ color: '#6366f1' }}>{comments.length}</span>
+          반응 <span style={{ color: '#6366f1' }}>{responses.length + comments.length}</span>
         </h3>
       </div>
 
-      {/* 댓글 목록 (스크롤 영역) */}
+      {/* 통합 피드 (음성 응답 + 텍스트 댓글, 시간순) */}
       <div ref={listRef} className="hover-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
-        {comments.length === 0 ? (
+        {responses.length === 0 && comments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>
-            첫 댓글을 남겨보세요!
+            첫 번째 반응을 남겨보세요!
           </div>
         ) : (
-          comments.map((c) => (
-            <CommentItem key={c.id} comment={c} myId={user?.id ?? null} onChanged={load} />
-          ))
+          [
+            ...responses.map((r) => ({ kind: 'response' as const, ts: new Date(r.created_at).getTime(), data: r })),
+            ...comments.map((c) => ({ kind: 'comment' as const, ts: new Date(c.created_at).getTime(), data: c })),
+          ]
+            .sort((a, b) => a.ts - b.ts)
+            .map((item) =>
+              item.kind === 'response'
+                ? <VoiceItem key={`r-${item.data.id}`} response={item.data} />
+                : <CommentItem key={`c-${item.data.id}`} comment={item.data} myId={user?.id ?? null} onChanged={load} />
+            )
         )}
       </div>
 

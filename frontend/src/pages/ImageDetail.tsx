@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getImage, generateAiResponse, uploadUserResponse, IMAGE_URL } from '../api';
+import { getImage, generateAiResponse, IMAGE_URL } from '../api';
 import type { ImageDetail as ImageDetailType } from '../types';
 import RecordButton from '../components/RecordButton';
-import ResponseCard from '../components/ResponseCard';
 import CommentSection from '../components/CommentSection';
 import { useAuth } from '../hooks/useAuth';
 
@@ -36,17 +35,6 @@ export default function ImageDetail() {
     }
   };
 
-  const handleRecording = async (blob: Blob) => {
-    if (!id) return;
-    setUploading(true);
-    try {
-      await uploadUserResponse(id, blob);
-      await load();
-    } finally {
-      setUploading(false);
-    }
-  };
-
   if (!data) return <div style={{ textAlign: 'center', padding: '80px', color: '#6b7280' }}>로딩 중...</div>;
 
   return (
@@ -68,7 +56,7 @@ export default function ImageDetail() {
       {/* 좌우 분할 영역 */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
 
-        {/* 왼쪽: 이미지 + 액션 + 응답 */}
+        {/* 왼쪽: 이미지 + 액션 버튼 */}
         <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* 이미지 */}
@@ -76,7 +64,7 @@ export default function ImageDetail() {
             <img
               src={IMAGE_URL(data.filename)}
               alt={data.original_name}
-              style={{ width: '100%', maxHeight: '55vh', objectFit: 'contain', display: 'block' }}
+              style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block' }}
             />
           </div>
 
@@ -99,37 +87,33 @@ export default function ImageDetail() {
                 {aiLoading ? '⏳ AI 생각 중...' : '🤖 AI 멘트'}
               </button>
               <span style={{ fontSize: '12px', color: '#9ca3af' }}>오늘 {user.ai_usage_today}/5회</span>
-              <RecordButton onRecordingComplete={handleRecording} disabled={uploading} />
+              <RecordButton onRecordingComplete={async (blob) => {
+                setUploading(true);
+                try {
+                  const { uploadUserResponse } = await import('../api');
+                  if (id) await uploadUserResponse(id, blob);
+                  await load();
+                } finally {
+                  setUploading(false);
+                }
+              }} disabled={uploading} />
               {uploading && <span style={{ color: '#6b7280', fontSize: '13px' }}>업로드 중...</span>}
             </div>
           )}
-
-          {/* 응답 목록 */}
-          <div>
-            <h3 style={{ margin: '0 0 12px', color: '#111827', fontSize: '15px' }}>
-              🎙 멘트 {data.responses.length}개
-            </h3>
-            {data.responses.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '32px', color: '#9ca3af', background: '#fff', borderRadius: '12px' }}>
-                <p style={{ fontSize: '32px', margin: '0 0 8px' }}>🎤</p>
-                <p style={{ margin: 0, fontSize: '14px' }}>아직 멘트가 없어요! AI에게 맡기거나 직접 녹음해보세요.</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {data.responses.map((r) => (
-                  <ResponseCard key={r.id} response={r} />
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* 구분선 */}
         <div style={{ width: '1px', background: '#e5e7eb', flexShrink: 0 }} />
 
-        {/* 오른쪽: 댓글 (입력창 하단 고정, 목록만 스크롤) */}
+        {/* 오른쪽: 음성 응답 + 텍스트 댓글 통합 피드 */}
         <div style={{ width: 'clamp(300px, 35vw, 420px)', flexShrink: 0, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
-          {id && <CommentSection imageId={id} onResponseAdded={load} />}
+          {id && (
+            <CommentSection
+              imageId={id}
+              responses={data.responses}
+              onResponseAdded={load}
+            />
+          )}
         </div>
 
       </div>
