@@ -21,6 +21,7 @@ body {
 /* 호버 시 스크롤바 표시 */
 .hover-scrollbar {
   scrollbar-width: none; /* Firefox */
+  scrollbar-gutter: stable; /* 스크롤바 공간 미리 확보 → 레이아웃 밀림 방지 */
 }
 .hover-scrollbar::-webkit-scrollbar {
   width: 6px;
