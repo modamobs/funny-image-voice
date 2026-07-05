@@ -127,8 +127,8 @@ export default function ImageDetail() {
         {/* 구분선 */}
         <div style={{ width: '1px', background: '#e5e7eb', flexShrink: 0 }} />
 
-        {/* 오른쪽: 댓글 (독립 스크롤) */}
-        <div style={{ width: 'clamp(300px, 35vw, 420px)', flexShrink: 0, overflowY: 'auto', background: '#fff', padding: '20px' }}>
+        {/* 오른쪽: 댓글 (입력창 하단 고정, 목록만 스크롤) */}
+        <div style={{ width: 'clamp(300px, 35vw, 420px)', flexShrink: 0, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
           {id && <CommentSection imageId={id} />}
         </div>
 

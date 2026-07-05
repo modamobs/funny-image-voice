@@ -133,6 +133,7 @@ export default function CommentSection({ imageId }: Props) {
   const { user, login } = useAuth();
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     const res = await getComments(imageId);
@@ -149,75 +150,74 @@ export default function CommentSection({ imageId }: Props) {
       await postComment(imageId, '', text);
       setText('');
       await load();
+      // 새 댓글 등록 후 목록 맨 아래로 스크롤
+      setTimeout(() => {
+        if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+      }, 50);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ marginTop: '40px' }}>
-      <h3 style={{ margin: '0 0 16px', color: '#111827' }}>
-        💬 댓글 {comments.length}개
-      </h3>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
-      {/* 댓글 입력 */}
-      {!user ? (
-        <div style={{ marginBottom: '24px', padding: '16px', background: '#fff', borderRadius: '12px', textAlign: 'center', border: '2px dashed #e5e7eb' }}>
-          <p style={{ margin: '0 0 10px', color: '#6b7280', fontSize: '14px' }}>댓글은 로그인 후 작성할 수 있습니다</p>
-          <button onClick={login} style={{ padding: '8px 20px', borderRadius: '20px', border: 'none', background: '#4338ca', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14, height: 14 }} />
-            Google 로그인
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} style={{ marginBottom: '24px', background: '#fff', padding: '16px', borderRadius: '12px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
-          {/* 작성자 정보 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <img src={user.picture} alt={user.name} style={{ width: 28, height: 28, borderRadius: '50%' }} />
-            <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '14px' }}>{user.name}</span>
-            <span style={{ fontSize: '12px', color: '#9ca3af' }}>으로 댓글 작성</span>
+      {/* 헤더 */}
+      <div style={{ padding: '16px 20px 12px', flexShrink: 0, borderBottom: '1px solid #f3f4f6' }}>
+        <h3 style={{ margin: 0, color: '#111827', fontSize: '16px', fontWeight: 700 }}>
+          댓글 <span style={{ color: '#6366f1' }}>{comments.length}</span>
+        </h3>
+      </div>
+
+      {/* 댓글 목록 (스크롤 영역) */}
+      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
+        {comments.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>
+            첫 댓글을 남겨보세요!
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <textarea
-              placeholder="댓글을 입력하세요..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={3}
-              style={{ padding: '10px 14px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
-            />
-            <button
-              type="submit"
-              disabled={submitting || !text.trim()}
-              style={{
-                alignSelf: 'flex-end',
-                padding: '10px 24px',
-                borderRadius: '20px',
-                border: 'none',
-                background: submitting || !text.trim() ? '#d1d5db' : '#6366f1',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: '14px',
-                cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {submitting ? '올리는 중...' : '등록'}
+        ) : (
+          comments.map((c) => (
+            <CommentItem key={c.id} comment={c} myId={user?.id ?? null} onChanged={load} />
+          ))
+        )}
+      </div>
+
+      {/* 입력창 (하단 고정) */}
+      <div style={{ flexShrink: 0, borderTop: '1px solid #e5e7eb', padding: '12px 16px', background: '#fff' }}>
+        {!user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ flex: 1, fontSize: '13px', color: '#9ca3af' }}>댓글은 로그인 후 작성할 수 있습니다</span>
+            <button onClick={login} style={{ padding: '7px 14px', borderRadius: '20px', border: 'none', background: '#4338ca', color: '#fff', fontWeight: 700, fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
+              <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 12, height: 12 }} />
+              로그인
             </button>
           </div>
-        </form>
-      )}
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <img src={user.picture} alt={user.name} style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0 }} />
+              <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '13px' }}>{user.name}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+              <textarea
+                placeholder="댓글 추가..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={2}
+                style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5 }}
+              />
+              <button
+                type="submit"
+                disabled={submitting || !text.trim()}
+                style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', background: submitting || !text.trim() ? '#d1d5db' : '#6366f1', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                {submitting ? '...' : '등록'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
 
-      {/* 댓글 목록 */}
-      {comments.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '32px', color: '#9ca3af', background: '#fff', borderRadius: '12px' }}>
-          첫 댓글을 남겨보세요!
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {comments.map((c) => (
-            <CommentItem key={c.id} comment={c} myId={user?.id ?? null} onChanged={load} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
