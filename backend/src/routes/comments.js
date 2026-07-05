@@ -17,16 +17,17 @@ router.get('/images/:imageId/comments', async (req, res) => {
 
 router.post('/images/:imageId/comments', requireAuth, async (req, res) => {
   try {
-    const { nickname, text } = req.body;
+    const { text } = req.body;
     if (!text?.trim()) return res.status(400).json({ error: '댓글 내용을 입력해주세요' });
 
     const image = await db.getImage(req.params.imageId);
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
 
+    const user = await db.getUserById(req.userId);
     const comment = await db.addComment({
       id: uuidv4(),
       image_id: req.params.imageId,
-      nickname: nickname?.trim() || '익명',
+      nickname: user?.name ?? '익명',
       text: text.trim(),
     });
     res.json(comment);

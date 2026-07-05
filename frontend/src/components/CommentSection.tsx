@@ -10,7 +10,6 @@ interface Props {
 export default function CommentSection({ imageId }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const { user, login } = useAuth();
-  const [nickname, setNickname] = useState('');
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -26,7 +25,7 @@ export default function CommentSection({ imageId }: Props) {
     if (!text.trim()) return;
     setSubmitting(true);
     try {
-      await postComment(imageId, nickname, text);
+      await postComment(imageId, '', text);
       setText('');
       await load();
     } finally {
@@ -50,39 +49,40 @@ export default function CommentSection({ imageId }: Props) {
           </button>
         </div>
       ) : (
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px', background: '#fff', padding: '16px', borderRadius: '12px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
-        <input
-          type="text"
-          placeholder="닉네임 (선택, 기본: 익명)"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          style={{ padding: '10px 14px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none' }}
-        />
-        <textarea
-          placeholder="댓글을 입력하세요..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={3}
-          style={{ padding: '10px 14px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
-        />
-        <button
-          type="submit"
-          disabled={submitting || !text.trim()}
-          style={{
-            alignSelf: 'flex-end',
-            padding: '10px 24px',
-            borderRadius: '20px',
-            border: 'none',
-            background: submitting || !text.trim() ? '#d1d5db' : '#6366f1',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: '14px',
-            cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {submitting ? '올리는 중...' : '등록'}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} style={{ marginBottom: '24px', background: '#fff', padding: '16px', borderRadius: '12px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
+          {/* 작성자 정보 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <img src={user.picture} alt={user.name} style={{ width: 28, height: 28, borderRadius: '50%' }} />
+            <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '14px' }}>{user.name}</span>
+            <span style={{ fontSize: '12px', color: '#9ca3af' }}>으로 댓글 작성</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <textarea
+              placeholder="댓글을 입력하세요..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={3}
+              style={{ padding: '10px 14px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
+            />
+            <button
+              type="submit"
+              disabled={submitting || !text.trim()}
+              style={{
+                alignSelf: 'flex-end',
+                padding: '10px 24px',
+                borderRadius: '20px',
+                border: 'none',
+                background: submitting || !text.trim() ? '#d1d5db' : '#6366f1',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {submitting ? '올리는 중...' : '등록'}
+            </button>
+          </div>
+        </form>
       )}
 
       {/* 댓글 목록 */}
@@ -95,16 +95,12 @@ export default function CommentSection({ imageId }: Props) {
           {comments.map((c) => (
             <div key={c.id} style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '14px' }}>
-                  {c.nickname}
-                </span>
+                <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '14px' }}>{c.nickname}</span>
                 <span style={{ color: '#9ca3af', fontSize: '12px' }}>
                   {new Date(c.created_at).toLocaleString('ko-KR')}
                 </span>
               </div>
-              <p style={{ margin: 0, color: '#374151', fontSize: '15px', lineHeight: '1.5' }}>
-                {c.text}
-              </p>
+              <p style={{ margin: 0, color: '#374151', fontSize: '15px', lineHeight: '1.5' }}>{c.text}</p>
             </div>
           ))}
         </div>
