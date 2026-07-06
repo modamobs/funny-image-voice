@@ -3,6 +3,37 @@ import type { Comment, Response } from '../types';
 import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, AUDIO_URL } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
+// 공통 확인 모달
+function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div
+      onClick={onCancel}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: '#fff', borderRadius: '16px', padding: '28px 28px 20px', width: '300px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: '20px' }}
+      >
+        <p style={{ margin: 0, fontSize: '15px', color: '#111827', textAlign: 'center', lineHeight: 1.6 }}>{message}</p>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={onCancel}
+            style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+          >
+            취소
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+          >
+            삭제
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface CommentItemProps {
   comment: Comment;
   myId: string | null;
@@ -16,6 +47,7 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
   const [likes, setLikes] = useState(comment.likes ?? 0);
   const [likedByMe, setLikedByMe] = useState(comment.liked_by_me ?? false);
   const [liking, setLiking] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isOwner = myId !== null && comment.user_id === myId;
@@ -40,8 +72,8 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
   };
 
   const handleDelete = async () => {
-    if (!confirm('댓글을 삭제할까요?')) return;
     await deleteComment(comment.id);
+    setConfirmDelete(false);
     onChanged();
   };
 
@@ -75,7 +107,7 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
           {isOwner && !editing && (
             <>
               <button onClick={handleEdit} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer' }}>수정</button>
-              <button onClick={handleDelete} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #fca5a5', background: '#fff1f2', color: '#ef4444', cursor: 'pointer' }}>삭제</button>
+              <button onClick={() => setConfirmDelete(true)} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #fca5a5', background: '#fff1f2', color: '#ef4444', cursor: 'pointer' }}>삭제</button>
             </>
           )}
         </div>
@@ -119,6 +151,13 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
           </button>
         </div>
       )}
+      {confirmDelete && (
+        <ConfirmModal
+          message="댓글을 삭제할까요?"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
     </div>
   );
 }
@@ -127,6 +166,7 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
 function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: string | null; onDeleted: () => void }) {
   const [votes, setVotes] = useState(response.votes);
   const [voted, setVoted] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const isAi = response.type === 'ai';
   const displayName = isAi ? '🤖 AI' : (response.nickname ?? '익명');
   const isOwner = myId !== null && response.user_id === myId;
@@ -139,8 +179,8 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
   };
 
   const handleDelete = async () => {
-    if (!confirm('음성을 삭제할까요?')) return;
     await deleteResponse(response.id);
+    setConfirmDelete(false);
     onDeleted();
   };
 
@@ -154,7 +194,7 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
             {new Date(response.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </span>
           {isOwner && (
-            <button onClick={handleDelete} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #fca5a5', background: '#fff1f2', color: '#ef4444', cursor: 'pointer' }}>삭제</button>
+            <button onClick={() => setConfirmDelete(true)} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #fca5a5', background: '#fff1f2', color: '#ef4444', cursor: 'pointer' }}>삭제</button>
           )}
         </div>
       </div>
@@ -173,6 +213,13 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
           👍 {votes > 0 && votes}
         </button>
       </div>
+      {confirmDelete && (
+        <ConfirmModal
+          message="음성을 삭제할까요?"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
     </div>
   );
 }
