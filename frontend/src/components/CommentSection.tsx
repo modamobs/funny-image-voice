@@ -264,7 +264,7 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
   const [voted, setVoted] = useState(response.voted_by_me ?? false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isAi = response.type === 'ai';
-  const displayName = isAi ? 'AI' : (response.nickname ?? '익명');
+  const displayName = response.nickname ?? '익명';
   const isOwner = myId !== null && response.user_id === myId;
 
   const handleVote = async () => {
@@ -278,15 +278,14 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
   return (
     <div style={{ display: 'flex', gap: '10px', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
       {/* 아바타 */}
-      {isAi ? (
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🤖</div>
-      ) : (
-        <Avatar name={displayName} />
-      )}
+      <Avatar name={displayName} />
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* 헤더 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
-          <span style={{ fontWeight: 700, fontSize: '13px', color: isAi ? '#4338ca' : '#111827' }}>{displayName}</span>
+          <span style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>{displayName}</span>
+          {isAi && (
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#6366f1', background: '#ede9fe', borderRadius: '6px', padding: '1px 6px', lineHeight: 1.6 }}>🤖 AI</span>
+          )}
           <TimeLabel iso={response.created_at} />
           {isOwner && (
             <ThreeDotMenu items={[
