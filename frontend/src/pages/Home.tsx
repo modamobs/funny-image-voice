@@ -144,8 +144,6 @@ export default function Home() {
           <div style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', maxWidth: '480px', width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}>
             <img src={IMAGE_URL(preview.filename)} alt="AI 생성 이미지" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
             <div style={{ padding: '20px 24px 24px' }}>
-              <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI 생성 프롬프트</p>
-              <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#6b7280', fontStyle: 'italic', lineHeight: 1.5 }}>"{preview.prompt}"</p>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   onClick={handleAiConfirm}
