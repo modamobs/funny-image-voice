@@ -86,18 +86,11 @@ Rules: safe for all ages, visually clear, max 40 words, output only the English 
 
     const imagePrompt = promptRes.choices[0].message.content.trim();
 
-    // 2. DALL-E 3으로 이미지 생성
-    const imageRes = await openai.images.generate({
-      model: 'dall-e-2',
-      prompt: imagePrompt,
-      n: 1,
-      size: '1024x1024',
-    });
-
-    const dalleUrl = imageRes.data[0].url;
+    // 2. Pollinations.ai로 이미지 생성 (API 키 불필요)
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
 
     // 3. 이미지 다운로드 후 R2 업로드
-    const { data: imageData } = await axios.get(dalleUrl, { responseType: 'arraybuffer', timeout: 30000 });
+    const { data: imageData } = await axios.get(pollinationsUrl, { responseType: 'arraybuffer', timeout: 60000 });
     const imageBuffer = Buffer.from(imageData);
     const r2Url = await uploadToR2(`images/${uuidv4()}.png`, imageBuffer, 'image/png');
 
