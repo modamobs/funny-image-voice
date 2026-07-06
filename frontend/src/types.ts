@@ -14,6 +14,8 @@ export interface Response {
   ai_text?: string;
   votes: number;
   created_at: string;
+  user_id: string | null;
+  nickname: string | null;
 }
 
 export interface ImageDetail extends ImageItem {

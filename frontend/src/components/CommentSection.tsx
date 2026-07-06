@@ -124,11 +124,12 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
   );
 }
 
-// 음성 응답 카드 (피드용 컴팩트 버전)
+// 음성 응답 카드 — 댓글과 동일한 레이아웃
 function VoiceItem({ response }: { response: Response }) {
   const [votes, setVotes] = useState(response.votes);
   const [voted, setVoted] = useState(false);
   const isAi = response.type === 'ai';
+  const displayName = isAi ? '🤖 AI' : (response.nickname ?? '익명');
 
   const handleVote = async () => {
     if (voted) return;
@@ -138,21 +139,29 @@ function VoiceItem({ response }: { response: Response }) {
   };
 
   return (
-    <div style={{ background: isAi ? '#f0f4ff' : '#f0fdf4', border: `1.5px solid ${isAi ? '#a5b4fc' : '#86efac'}`, borderRadius: '12px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '16px' }}>{isAi ? '🤖' : '👤'}</span>
-        <span style={{ fontWeight: 700, fontSize: '13px', color: isAi ? '#4338ca' : '#16a34a' }}>{isAi ? 'AI 멘트' : '유저 녹음'}</span>
-        <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#9ca3af' }}>
+    <div style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${isAi ? '#6366f1' : '#22c55e'}` }}>
+      {/* 헤더: 이름 + 시간 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <span style={{ fontWeight: 700, fontSize: '13px', color: isAi ? '#4338ca' : '#16a34a' }}>{displayName}</span>
+        <span style={{ fontSize: '11px', color: '#9ca3af' }}>
           {new Date(response.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
+      {/* AI 멘트 텍스트 */}
       {response.ai_text && (
-        <p style={{ margin: 0, fontStyle: 'italic', color: '#374151', fontSize: '13px' }}>"{response.ai_text}"</p>
+        <p style={{ margin: '0 0 8px', fontStyle: 'italic', color: '#374151', fontSize: '13px', lineHeight: 1.5 }}>"{response.ai_text}"</p>
       )}
-      <audio controls src={AUDIO_URL(response.audio_filename)} style={{ width: '100%', height: '32px' }} />
-      <button onClick={handleVote} disabled={voted} style={{ alignSelf: 'flex-start', padding: '3px 12px', borderRadius: '20px', border: `1.5px solid ${voted ? '#f59e0b' : '#d1d5db'}`, background: voted ? '#fef3c7' : '#fff', cursor: voted ? 'default' : 'pointer', fontSize: '12px', fontWeight: 600, color: '#374151' }}>
-        👍 {votes}
-      </button>
+      {/* 오디오 + 투표 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+        <audio controls src={AUDIO_URL(response.audio_filename)} style={{ flex: 1, height: '32px', minWidth: 0 }} />
+        <button
+          onClick={handleVote}
+          disabled={voted}
+          style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', border: `1.5px solid ${voted ? '#f59e0b' : '#e5e7eb'}`, background: voted ? '#fef3c7' : '#f9fafb', color: voted ? '#b45309' : '#9ca3af', fontSize: '13px', fontWeight: 600, cursor: voted ? 'default' : 'pointer', flexShrink: 0 }}
+        >
+          👍 {votes > 0 ? votes : ''}
+        </button>
+      </div>
     </div>
   );
 }

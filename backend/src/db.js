@@ -55,6 +55,8 @@ async function init() {
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       PRIMARY KEY (comment_id, user_id)
     );
+
+    ALTER TABLE responses ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id);
   `);
 }
 
@@ -76,7 +78,11 @@ const db = {
     const { rows: images } = await pool.query('SELECT * FROM images WHERE id = $1', [id]);
     if (!images[0]) return null;
     const { rows: responses } = await pool.query(
-      'SELECT * FROM responses WHERE image_id = $1 ORDER BY votes DESC, created_at DESC',
+      `SELECT r.*, u.name AS nickname
+       FROM responses r
+       LEFT JOIN users u ON u.id = r.user_id
+       WHERE r.image_id = $1
+       ORDER BY r.created_at ASC`,
       [id]
     );
     return { ...images[0], responses };
@@ -89,10 +95,10 @@ const db = {
     );
   },
 
-  async addResponse({ id, image_id, type, audio_filename, ai_text }) {
+  async addResponse({ id, image_id, type, audio_filename, ai_text, user_id }) {
     await pool.query(
-      'INSERT INTO responses (id, image_id, type, audio_filename, ai_text) VALUES ($1, $2, $3, $4, $5)',
-      [id, image_id, type, audio_filename, ai_text ?? null]
+      'INSERT INTO responses (id, image_id, type, audio_filename, ai_text, user_id) VALUES ($1, $2, $3, $4, $5, $6)',
+      [id, image_id, type, audio_filename, ai_text ?? null, user_id ?? null]
     );
   },
 
