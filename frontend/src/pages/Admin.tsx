@@ -42,6 +42,7 @@ export default function Admin() {
   const [responses, setResponses] = useState<AdminResponse[]>([]);
   const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [tabLoaded, setTabLoaded] = useState<Set<Tab>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     adminGetStats().then(r => setStats(r.data)).catch(() => {});
@@ -54,11 +55,54 @@ export default function Admin() {
     if (tab === 'users') adminGetUsers().then(r => setUsers(r.data)).catch(() => {});
     if (tab === 'comments') adminGetComments().then(r => setComments(r.data)).catch(() => {});
     if (tab === 'responses') adminGetResponses().then(r => setResponses(r.data)).catch(() => {});
-  }, [tab]);
+  }, [tab, tabLoaded]);
+
+  const changeTab = (t: Tab) => { setTab(t); setSelected(new Set()); };
 
   const reload = (t: Tab) => {
     setTabLoaded(p => { const s = new Set(p); s.delete(t); return s; });
     adminGetStats().then(r => setStats(r.data)).catch(() => {});
+  };
+
+  const toggleOne = (id: string) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const toggleAll = (ids: string[]) => {
+    const allChecked = ids.length > 0 && ids.every(id => selected.has(id));
+    setSelected(prev => {
+      const next = new Set(prev);
+      allChecked ? ids.forEach(id => next.delete(id)) : ids.forEach(id => next.add(id));
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    const label = tab === 'images' ? '이미지' : tab === 'comments' ? '댓글' : '음성반응';
+    setConfirm({
+      message: `선택한 ${ids.length}개의 ${label}을(를) 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`,
+      onConfirm: async () => {
+        if (tab === 'images') {
+          await Promise.all(ids.map(id => adminDeleteImage(id)));
+          setImages(p => p.filter(i => !ids.includes(i.id)));
+          reload('images');
+        } else if (tab === 'comments') {
+          await Promise.all(ids.map(id => adminDeleteComment(id)));
+          setComments(p => p.filter(c => !ids.includes(c.id)));
+          reload('comments');
+        } else if (tab === 'responses') {
+          await Promise.all(ids.map(id => adminDeleteResponse(id)));
+          setResponses(p => p.filter(r => !ids.includes(r.id)));
+          reload('responses');
+        }
+        setSelected(new Set());
+        setConfirm(null);
+      },
+    });
   };
 
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#6b7280' }}>로딩 중...</div>;
@@ -88,9 +132,13 @@ export default function Admin() {
 
   const thStyle: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 700, color: '#6b7280', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' };
   const tdStyle: React.CSSProperties = { padding: '10px 12px', fontSize: '13px', color: '#374151', borderBottom: '1px solid #f3f4f6', verticalAlign: 'middle' };
+  const cbTh: React.CSSProperties = { ...thStyle, width: '36px', textAlign: 'center' };
+  const cbTd: React.CSSProperties = { ...tdStyle, width: '36px', textAlign: 'center' };
+
+  const supportsMultiDelete = tab === 'images' || tab === 'comments' || tab === 'responses';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: '#f9fafb', paddingBottom: selected.size > 0 ? '80px' : '0' }}>
       {/* 헤더 */}
       <div style={{ background: '#312e81', padding: '16px 24px', color: '#fff', display: 'flex', alignItems: 'center', gap: '16px' }}>
         <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '13px', cursor: 'pointer', padding: 0 }}>← 홈</button>
@@ -124,11 +172,11 @@ export default function Admin() {
         {/* 탭 */}
         <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', overflowX: 'auto' }}>
-            <button style={tabStyle('dashboard')} onClick={() => setTab('dashboard')}>대시보드</button>
-            <button style={tabStyle('images')} onClick={() => setTab('images')}>이미지 {stats ? `(${stats.images})` : ''}</button>
-            <button style={tabStyle('users')} onClick={() => setTab('users')}>사용자 {stats ? `(${stats.users})` : ''}</button>
-            <button style={tabStyle('comments')} onClick={() => setTab('comments')}>댓글 {stats ? `(${stats.comments + stats.replies})` : ''}</button>
-            <button style={tabStyle('responses')} onClick={() => setTab('responses')}>음성 {stats ? `(${stats.responses})` : ''}</button>
+            <button style={tabStyle('dashboard')} onClick={() => changeTab('dashboard')}>대시보드</button>
+            <button style={tabStyle('images')} onClick={() => changeTab('images')}>이미지 {stats ? `(${stats.images})` : ''}</button>
+            <button style={tabStyle('users')} onClick={() => changeTab('users')}>사용자 {stats ? `(${stats.users})` : ''}</button>
+            <button style={tabStyle('comments')} onClick={() => changeTab('comments')}>댓글 {stats ? `(${stats.comments + stats.replies})` : ''}</button>
+            <button style={tabStyle('responses')} onClick={() => changeTab('responses')}>음성 {stats ? `(${stats.responses})` : ''}</button>
           </div>
 
           <div style={{ padding: '24px', overflowX: 'auto' }}>
@@ -151,6 +199,12 @@ export default function Admin() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
+                    <th style={cbTh}>
+                      <input type="checkbox"
+                        checked={images.length > 0 && images.every(i => selected.has(i.id))}
+                        onChange={() => toggleAll(images.map(i => i.id))}
+                      />
+                    </th>
                     <th style={thStyle}>썸네일</th>
                     <th style={thStyle}>파일명</th>
                     <th style={thStyle}>업로드일</th>
@@ -161,7 +215,8 @@ export default function Admin() {
                 </thead>
                 <tbody>
                   {images.map(img => (
-                    <tr key={img.id}>
+                    <tr key={img.id} style={{ background: selected.has(img.id) ? '#eff6ff' : 'transparent' }}>
+                      <td style={cbTd}><input type="checkbox" checked={selected.has(img.id)} onChange={() => toggleOne(img.id)} /></td>
                       <td style={tdStyle}>
                         <img src={IMAGE_URL(img.filename)} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }} onClick={() => navigate(`/image/${img.id}`)} />
                       </td>
@@ -175,6 +230,7 @@ export default function Admin() {
                           onConfirm: async () => {
                             await adminDeleteImage(img.id);
                             setImages(p => p.filter(i => i.id !== img.id));
+                            setSelected(p => { const n = new Set(p); n.delete(img.id); return n; });
                             setConfirm(null);
                             reload('images');
                           },
@@ -219,6 +275,12 @@ export default function Admin() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
+                    <th style={cbTh}>
+                      <input type="checkbox"
+                        checked={comments.length > 0 && comments.every(c => selected.has(c.id))}
+                        onChange={() => toggleAll(comments.map(c => c.id))}
+                      />
+                    </th>
                     <th style={thStyle}>작성자</th>
                     <th style={thStyle}>내용</th>
                     <th style={thStyle}>이미지</th>
@@ -229,7 +291,8 @@ export default function Admin() {
                 </thead>
                 <tbody>
                   {comments.map(c => (
-                    <tr key={c.id}>
+                    <tr key={c.id} style={{ background: selected.has(c.id) ? '#eff6ff' : 'transparent' }}>
+                      <td style={cbTd}><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleOne(c.id)} /></td>
                       <td style={tdStyle}><span style={{ fontWeight: 600 }}>{c.nickname}</span><br /><span style={{ fontSize: '11px', color: '#9ca3af' }}>{c.user_email}</span></td>
                       <td style={{ ...tdStyle, maxWidth: '300px' }}><span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.text}</span></td>
                       <td style={tdStyle}><span style={{ color: '#4338ca', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/image/${c.image_id}`)}>{c.image_name}</span></td>
@@ -241,6 +304,7 @@ export default function Admin() {
                           onConfirm: async () => {
                             await adminDeleteComment(c.id);
                             setComments(p => p.filter(x => x.id !== c.id));
+                            setSelected(p => { const n = new Set(p); n.delete(c.id); return n; });
                             setConfirm(null);
                             reload('comments');
                           },
@@ -257,6 +321,12 @@ export default function Admin() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
+                    <th style={cbTh}>
+                      <input type="checkbox"
+                        checked={responses.length > 0 && responses.every(r => selected.has(r.id))}
+                        onChange={() => toggleAll(responses.map(r => r.id))}
+                      />
+                    </th>
                     <th style={thStyle}>타입</th>
                     <th style={thStyle}>작성자</th>
                     <th style={thStyle}>AI 멘트</th>
@@ -268,7 +338,8 @@ export default function Admin() {
                 </thead>
                 <tbody>
                   {responses.map(r => (
-                    <tr key={r.id}>
+                    <tr key={r.id} style={{ background: selected.has(r.id) ? '#eff6ff' : 'transparent' }}>
+                      <td style={cbTd}><input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} /></td>
                       <td style={tdStyle}><span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: r.type === 'ai' ? '#e0e7ff' : '#dcfce7', color: r.type === 'ai' ? '#4338ca' : '#16a34a', fontWeight: 700 }}>{r.type === 'ai' ? 'AI' : '사용자'}</span></td>
                       <td style={tdStyle}><span style={{ fontWeight: 600 }}>{r.user_name ?? '익명'}</span><br /><span style={{ fontSize: '11px', color: '#9ca3af' }}>{r.user_email}</span></td>
                       <td style={{ ...tdStyle, maxWidth: '280px', fontStyle: r.ai_text ? 'italic' : 'normal', color: r.ai_text ? '#374151' : '#9ca3af' }}>{r.ai_text ?? '-'}</td>
@@ -281,6 +352,7 @@ export default function Admin() {
                           onConfirm: async () => {
                             await adminDeleteResponse(r.id);
                             setResponses(p => p.filter(x => x.id !== r.id));
+                            setSelected(p => { const n = new Set(p); n.delete(r.id); return n; });
                             setConfirm(null);
                             reload('responses');
                           },
@@ -295,6 +367,20 @@ export default function Admin() {
           </div>
         </div>
       </div>
+
+      {/* 일괄 삭제 바 */}
+      {selected.size > 0 && supportsMultiDelete && (
+        <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: '#1f2937', color: '#fff', padding: '14px 24px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.35)', zIndex: 200, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>{selected.size}개 선택됨</span>
+          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.2)' }} />
+          <button onClick={handleBulkDelete} style={{ padding: '7px 18px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+            선택 삭제
+          </button>
+          <button onClick={() => setSelected(new Set())} style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.25)', background: 'transparent', color: 'rgba(255,255,255,0.8)', fontSize: '13px', cursor: 'pointer' }}>
+            취소
+          </button>
+        </div>
+      )}
 
       {confirm && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={() => setConfirm(null)} />}
     </div>
