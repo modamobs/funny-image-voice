@@ -261,7 +261,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
       setText('');
       await load();
       setTimeout(() => {
-        if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+        if (listRef.current) listRef.current.scrollTop = 0;
       }, 50);
     } finally {
       setSubmitting(false);
@@ -337,7 +337,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
             ...responses.map((r) => ({ kind: 'response' as const, ts: new Date(r.created_at).getTime(), data: r })),
             ...comments.map((c) => ({ kind: 'comment' as const, ts: new Date(c.created_at).getTime(), data: c })),
           ]
-            .sort((a, b) => a.ts - b.ts)
+            .sort((a, b) => b.ts - a.ts)
             .map((item) =>
               item.kind === 'response'
                 ? <VoiceItem key={`r-${item.data.id}`} response={item.data} myId={user?.id ?? null} onDeleted={() => onResponseAdded?.()} />
