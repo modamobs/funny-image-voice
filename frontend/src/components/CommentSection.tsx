@@ -326,24 +326,54 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
         </h3>
       </div>
 
-      {/* 통합 피드 (음성 응답 + 텍스트 댓글, 시간순) */}
+      {/* 통합 피드 */}
       <div ref={listRef} className="hover-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
         {responses.length === 0 && comments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>
             첫 번째 반응을 남겨보세요!
           </div>
-        ) : (
-          [
-            ...responses.map((r) => ({ kind: 'response' as const, ts: new Date(r.created_at).getTime(), data: r })),
-            ...comments.map((c) => ({ kind: 'comment' as const, ts: new Date(c.created_at).getTime(), data: c })),
-          ]
-            .sort((a, b) => b.ts - a.ts)
-            .map((item) =>
-              item.kind === 'response'
-                ? <VoiceItem key={`r-${item.data.id}`} response={item.data} myId={user?.id ?? null} onDeleted={() => onResponseAdded?.()} />
-                : <CommentItem key={`c-${item.data.id}`} comment={item.data} myId={user?.id ?? null} onChanged={load} />
-            )
-        )}
+        ) : (() => {
+          const all = [
+            ...responses.map((r) => ({ kind: 'response' as const, ts: new Date(r.created_at).getTime(), score: r.votes, data: r })),
+            ...comments.map((c) => ({ kind: 'comment' as const, ts: new Date(c.created_at).getTime(), score: c.likes ?? 0, data: c })),
+          ];
+
+          // 좋아요 1개 이상인 것 중 최다 득표 항목
+          const top = all.filter(i => i.score > 0).reduce<typeof all[0] | null>(
+            (best, cur) => (best === null || cur.score > best.score ? cur : best), null
+          );
+          const rest = all
+            .filter(i => i !== top)
+            .sort((a, b) => b.ts - a.ts);
+
+          const renderItem = (item: typeof all[0]) =>
+            item.kind === 'response'
+              ? <VoiceItem key={`r-${item.data.id}`} response={item.data} myId={user?.id ?? null} onDeleted={() => onResponseAdded?.()} />
+              : <CommentItem key={`c-${item.data.id}`} comment={item.data} myId={user?.id ?? null} onChanged={load} />;
+
+          return (
+            <>
+              {top && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#b45309' }}>🏆 인기 반응</span>
+                  </div>
+                  <div style={{ borderRadius: '14px', outline: '2px solid #f59e0b', outlineOffset: '2px' }}>
+                    {renderItem(top)}
+                  </div>
+                  {rest.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+                      <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+                      <span style={{ fontSize: '12px', color: '#9ca3af' }}>최신순</span>
+                      <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+                    </div>
+                  )}
+                </>
+              )}
+              {rest.map(renderItem)}
+            </>
+          );
+        })()}
       </div>
 
       {/* 입력창 (하단 고정) */}
