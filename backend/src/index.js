@@ -8,6 +8,7 @@ const imagesRouter = require('./routes/images');
 const responsesRouter = require('./routes/responses');
 const commentsRouter = require('./routes/comments');
 const authRouter = require('./routes/auth');
+const adminRouter = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,7 @@ app.use('/auth', authRouter);
 app.use('/api/images', imagesRouter);
 app.use('/api', responsesRouter);
 app.use('/api', commentsRouter);
+app.use('/api/admin', adminRouter);
 
 db.init().then(() => {
   app.listen(PORT, () => console.log(`서버 실행 중: http://localhost:${PORT}`));

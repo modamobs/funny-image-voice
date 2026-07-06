@@ -30,6 +30,15 @@ export const deleteComment = (commentId: string) =>
 export const likeComment = (commentId: string) =>
   api.post(`/comments/${commentId}/like`);
 
+export const adminGetStats = () => api.get('/admin/stats');
+export const adminGetImages = () => api.get('/admin/images');
+export const adminDeleteImage = (id: string) => api.delete(`/admin/images/${id}`);
+export const adminGetUsers = () => api.get('/admin/users');
+export const adminGetComments = () => api.get('/admin/comments');
+export const adminDeleteComment = (id: string) => api.delete(`/admin/comments/${id}`);
+export const adminGetResponses = () => api.get('/admin/responses');
+export const adminDeleteResponse = (id: string) => api.delete(`/admin/responses/${id}`);
+
 export const getMe = (token: string) =>
   axios.get(`${BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
 

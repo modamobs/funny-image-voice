@@ -224,6 +224,85 @@ const db = {
       [userId]
     );
   },
+
+  async adminStats() {
+    const { rows } = await pool.query(`
+      SELECT
+        (SELECT COUNT(*)::int FROM images) AS images,
+        (SELECT COUNT(*)::int FROM users) AS users,
+        (SELECT COUNT(*)::int FROM comments WHERE parent_id IS NULL) AS comments,
+        (SELECT COUNT(*)::int FROM comments WHERE parent_id IS NOT NULL) AS replies,
+        (SELECT COUNT(*)::int FROM responses) AS responses
+    `);
+    return rows[0];
+  },
+
+  async adminGetImages() {
+    const { rows } = await pool.query(`
+      SELECT i.*,
+        COUNT(DISTINCT r.id)::int AS response_count,
+        COUNT(DISTINCT c.id)::int AS comment_count
+      FROM images i
+      LEFT JOIN responses r ON r.image_id = i.id
+      LEFT JOIN comments c ON c.image_id = i.id AND c.parent_id IS NULL
+      GROUP BY i.id
+      ORDER BY i.created_at DESC
+    `);
+    return rows;
+  },
+
+  async adminDeleteImage(id) {
+    const { rowCount } = await pool.query('DELETE FROM images WHERE id = $1', [id]);
+    return rowCount > 0;
+  },
+
+  async adminGetUsers() {
+    const { rows } = await pool.query(`
+      SELECT u.*,
+        COUNT(DISTINCT c.id)::int AS comment_count,
+        COUNT(DISTINCT r.id)::int AS response_count
+      FROM users u
+      LEFT JOIN comments c ON c.user_id = u.id
+      LEFT JOIN responses r ON r.user_id = u.id
+      GROUP BY u.id
+      ORDER BY u.created_at DESC
+    `);
+    return rows;
+  },
+
+  async adminGetComments() {
+    const { rows } = await pool.query(`
+      SELECT c.*, u.email AS user_email, u.picture AS user_picture, i.original_name AS image_name
+      FROM comments c
+      LEFT JOIN users u ON u.id = c.user_id
+      LEFT JOIN images i ON i.id = c.image_id
+      ORDER BY c.created_at DESC
+      LIMIT 200
+    `);
+    return rows;
+  },
+
+  async adminDeleteComment(id) {
+    const { rowCount } = await pool.query('DELETE FROM comments WHERE id = $1', [id]);
+    return rowCount > 0;
+  },
+
+  async adminGetResponses() {
+    const { rows } = await pool.query(`
+      SELECT r.*, u.email AS user_email, u.name AS user_name, i.original_name AS image_name
+      FROM responses r
+      LEFT JOIN users u ON u.id = r.user_id
+      LEFT JOIN images i ON i.id = r.image_id
+      ORDER BY r.created_at DESC
+      LIMIT 200
+    `);
+    return rows;
+  },
+
+  async adminDeleteResponse(id) {
+    const { rowCount } = await pool.query('DELETE FROM responses WHERE id = $1', [id]);
+    return rowCount > 0;
+  },
 };
 
 module.exports = db;

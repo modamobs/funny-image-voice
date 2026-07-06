@@ -44,6 +44,11 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <img src={user.picture} alt={user.name} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)' }} />
                 <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>
+                {user.is_admin && (
+                  <button onClick={() => navigate('/admin')} style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '13px', cursor: 'pointer' }}>
+                    🛠 관리
+                  </button>
+                )}
                 <button onClick={logout} style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '13px', cursor: 'pointer' }}>
                   로그아웃
                 </button>

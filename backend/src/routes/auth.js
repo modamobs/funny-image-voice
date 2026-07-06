@@ -66,7 +66,8 @@ router.get('/me', async (req, res) => {
     const user = await db.getUserById(payload.userId);
     if (!user) return res.json(null);
     const aiUsage = await db.getAiUsageToday(user.id);
-    res.json({ ...user, ai_usage_today: aiUsage });
+    const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).filter(Boolean);
+    res.json({ ...user, ai_usage_today: aiUsage, is_admin: adminEmails.includes(user.email) });
   } catch {
     res.json(null);
   }

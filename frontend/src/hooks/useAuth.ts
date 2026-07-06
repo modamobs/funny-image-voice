@@ -7,6 +7,7 @@ export interface User {
   email: string;
   picture: string;
   ai_usage_today: number;
+  is_admin: boolean;
 }
 
 export function useAuth() {
