@@ -12,7 +12,9 @@ export const uploadImage = (file: File) => {
 };
 export const generateAiResponse = (imageId: string) =>
   api.post(`/images/${imageId}/ai-response`);
-export const generateAiImage = () => api.post('/images/ai-generate');
+export const previewAiImage = () => api.post('/images/ai-preview');
+export const confirmAiImage = (filename: string, prompt: string) =>
+  api.post('/images/ai-confirm', { filename, prompt });
 export const uploadUserResponse = (imageId: string, blob: Blob) => {
   const form = new FormData();
   form.append('audio', blob, 'recording.webm');

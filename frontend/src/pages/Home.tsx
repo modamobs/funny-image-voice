@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getImages, uploadImage, generateAiImage, IMAGE_URL } from '../api';
+import { getImages, uploadImage, previewAiImage, confirmAiImage, IMAGE_URL } from '../api';
 import type { ImageItem } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
@@ -8,7 +8,9 @@ export default function Home() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [genError, setGenError] = useState('');
+  const [preview, setPreview] = useState<{ filename: string; prompt: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { user, loading, login, logout } = useAuth();
@@ -25,14 +27,27 @@ export default function Home() {
     setGenerating(true);
     setGenError('');
     try {
-      const res = await generateAiImage();
-      navigate(`/image/${res.data.id}`);
+      const res = await previewAiImage();
+      setPreview(res.data);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'AI 이미지 생성에 실패했습니다';
       setGenError(msg);
       setTimeout(() => setGenError(''), 4000);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleAiConfirm = async () => {
+    if (!preview) return;
+    setConfirming(true);
+    try {
+      const res = await confirmAiImage(preview.filename, preview.prompt);
+      setPreview(null);
+      await load();
+      navigate(`/image/${res.data.id}`);
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -122,6 +137,42 @@ export default function Home() {
         )}
       </div>
       <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
+
+      {/* AI 이미지 미리보기 모달 */}
+      {preview && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, padding: '20px' }}>
+          <div style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', maxWidth: '480px', width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}>
+            <img src={IMAGE_URL(preview.filename)} alt="AI 생성 이미지" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
+            <div style={{ padding: '20px 24px 24px' }}>
+              <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI 생성 프롬프트</p>
+              <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#6b7280', fontStyle: 'italic', lineHeight: 1.5 }}>"{preview.prompt}"</p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={handleAiConfirm}
+                  disabled={confirming}
+                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: confirming ? '#9ca3af' : '#6366f1', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: confirming ? 'not-allowed' : 'pointer' }}
+                >
+                  {confirming ? '올리는 중...' : '✅ 올리기'}
+                </button>
+                <button
+                  onClick={handleAiGenerate}
+                  disabled={generating || confirming}
+                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '15px', fontWeight: 700, cursor: generating || confirming ? 'not-allowed' : 'pointer' }}
+                >
+                  {generating ? '생성 중...' : '🔄 다시 생성'}
+                </button>
+                <button
+                  onClick={() => setPreview(null)}
+                  disabled={confirming}
+                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#9ca3af', fontSize: '15px', cursor: 'pointer' }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 이미지 그리드 */}
       <div

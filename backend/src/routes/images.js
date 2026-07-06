@@ -59,7 +59,8 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
-router.post('/ai-generate', requireAuth, async (req, res) => {
+// 1단계: 이미지 생성 + R2 업로드 (DB 저장 없음) → 미리보기용
+router.post('/ai-preview', requireAuth, async (req, res) => {
   try {
     const usage = await db.getAiImageUsageToday(req.userId);
     if (usage >= AI_IMAGE_DAILY_LIMIT) {
@@ -68,13 +69,13 @@ router.post('/ai-generate', requireAuth, async (req, res) => {
 
     const openai = getOpenAI();
 
-    // 1. GPT로 웃긴 이미지 프롬프트 생성
+    // GPT로 웃긴 프롬프트 생성
     const promptRes = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `You create short, funny, absurd image prompts for DALL-E.
+          content: `You create short, funny, absurd image prompts for image generation.
 Style: Korean variety show humor — animals doing human jobs badly, everyday objects in surreal situations, unexpected reversals, cartoon-like exaggeration.
 Rules: safe for all ages, visually clear, max 40 words, output only the English prompt.`,
         },
@@ -85,7 +86,7 @@ Rules: safe for all ages, visually clear, max 40 words, output only the English 
 
     const imagePrompt = promptRes.choices[0].message.content.trim();
 
-    // 2. gpt-image-1으로 이미지 생성 (base64 반환)
+    // gpt-image-1으로 이미지 생성 (base64 반환)
     const imageRes = await openai.images.generate({
       model: 'gpt-image-1',
       prompt: imagePrompt,
@@ -96,15 +97,26 @@ Rules: safe for all ages, visually clear, max 40 words, output only the English 
     const imageBuffer = Buffer.from(imageRes.data[0].b64_json, 'base64');
     const r2Url = await uploadToR2(`images/${uuidv4()}.png`, imageBuffer, 'image/png');
 
-    // 4. DB 저장 + 사용량 기록
+    // 사용량 기록 (DB 이미지 저장은 2단계에서)
     await db.incrementAiImageUsage(req.userId);
-    const id = uuidv4();
-    await db.addImage({ id, filename: r2Url, original_name: `[AI] ${imagePrompt.slice(0, 80)}` });
 
-    res.json({ id, filename: r2Url, prompt: imagePrompt });
+    res.json({ filename: r2Url, prompt: imagePrompt });
   } catch (err) {
-    console.error('AI image generation error:', err);
+    console.error('AI image preview error:', err);
     res.status(500).json({ error: 'AI 이미지 생성 실패: ' + err.message });
+  }
+});
+
+// 2단계: 미리보기 확인 후 DB에 저장
+router.post('/ai-confirm', requireAuth, async (req, res) => {
+  try {
+    const { filename, prompt } = req.body;
+    if (!filename) return res.status(400).json({ error: '잘못된 요청입니다' });
+    const id = uuidv4();
+    await db.addImage({ id, filename, original_name: `[AI] ${(prompt ?? '').slice(0, 80)}` });
+    res.json({ id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
