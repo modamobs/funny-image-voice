@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Comment, Response } from '../types';
-import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, AUDIO_URL } from '../api';
+import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, generateAiResponse, AUDIO_URL } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
 // 닉네임으로 아바타 배경색 결정
@@ -328,6 +328,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
   const [inputMode, setInputMode] = useState<'text' | 'recording'>('text');
   const [recordingSec, setRecordingSec] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -379,6 +380,19 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
       setRecordingSec(0);
       timerRef.current = setInterval(() => setRecordingSec(s => s + 1), 1000);
     } catch { alert('마이크 권한이 필요합니다.'); }
+  };
+
+  const handleAiResponse = async () => {
+    setAiLoading(true);
+    try {
+      await generateAiResponse(imageId);
+      onResponseAdded?.();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'AI 멘트 생성 실패';
+      alert(msg);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const stopRecording = () => { if (timerRef.current) clearInterval(timerRef.current); mediaRecorderRef.current?.stop(); };
@@ -481,6 +495,13 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
                       {submitting ? '...' : '등록'}
                     </button>
                   </div>
+                </div>
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button type="button" onClick={handleAiResponse} disabled={aiLoading}
+                    style={{ padding: '6px 14px', borderRadius: '16px', border: 'none', background: aiLoading ? '#d1d5db' : '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: aiLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {aiLoading ? '⏳ AI 생각 중...' : '🤖 AI 멘트'}
+                  </button>
+                  <span style={{ fontSize: '11px', color: '#9ca3af' }}>오늘 {user.ai_usage_today}/5회</span>
                 </div>
               </form>
             )}
