@@ -48,9 +48,7 @@ export default function ImageDetail() {
         >
           ← 목록
         </button>
-        <h2 style={{ margin: 0, color: '#fff', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-          {data.original_name}
-        </h2>
+        <h2 style={{ margin: 0, color: '#fff', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} />
       </div>
 
       {/* 좌우 분할 영역 */}

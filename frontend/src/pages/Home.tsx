@@ -123,11 +123,8 @@ export default function Home() {
               alt={img.original_name}
               style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block' }}
             />
-            <div style={{ padding: '12px 16px' }}>
-              <p style={{ margin: 0, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {img.original_name}
-              </p>
-              <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: '13px' }}>
+            <div style={{ padding: '10px 16px' }}>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: '13px' }}>
                 🎙 멘트 {img.response_count ?? 0}개
               </p>
             </div>
