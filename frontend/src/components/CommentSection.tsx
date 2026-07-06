@@ -95,9 +95,12 @@ interface CommentItemProps {
   comment: Comment;
   myId: string | null;
   onChanged: () => void;
+  replies?: Comment[];
+  onReply?: (parentId: string, text: string) => Promise<void>;
+  isReply?: boolean;
 }
 
-function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
+function CommentItem({ comment, myId, onChanged, replies = [], onReply, isReply = false }: CommentItemProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
   const [saving, setSaving] = useState(false);
@@ -105,7 +108,12 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
   const [likedByMe, setLikedByMe] = useState(comment.liked_by_me ?? false);
   const [liking, setLiking] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isOwner = myId !== null && comment.user_id === myId;
   const canLike = myId !== null && !isOwner;
@@ -134,13 +142,32 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
     } finally { setLiking(false); }
   };
 
+  const handleReplyToggle = () => {
+    if (!myId) return;
+    setShowReplyForm(p => !p);
+    if (!showReplyForm) setTimeout(() => replyTextareaRef.current?.focus(), 0);
+  };
+
+  const handleReplySubmit = async () => {
+    if (!replyText.trim() || !onReply) return;
+    setSubmittingReply(true);
+    try {
+      await onReply(comment.id, replyText.trim());
+      setReplyText('');
+      setShowReplyForm(false);
+      setShowReplies(true);
+    } finally { setSubmittingReply(false); }
+  };
+
+  const avatarSize = isReply ? 28 : 36;
+
   return (
-    <div style={{ display: 'flex', gap: '10px', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
-      <Avatar name={comment.nickname || '?'} />
+    <div style={{ display: 'flex', gap: '10px', padding: isReply ? '8px 0' : '12px 0', borderBottom: isReply ? 'none' : '1px solid #f3f4f6' }}>
+      <Avatar name={comment.nickname || '?'} size={avatarSize} />
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* 헤더 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
-          <span style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>{comment.nickname}</span>
+          <span style={{ fontWeight: 700, fontSize: isReply ? '12px' : '13px', color: '#111827' }}>{comment.nickname}</span>
           <TimeLabel iso={comment.created_at} />
           {isOwner && !editing && (
             <ThreeDotMenu items={[
@@ -164,15 +191,65 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
           </div>
         ) : (
           <>
-            <p style={{ margin: '0 0 6px', fontSize: '14px', color: '#1f2937', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{comment.text}</p>
+            <p style={{ margin: '0 0 6px', fontSize: isReply ? '13px' : '14px', color: '#1f2937', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{comment.text}</p>
             {/* 액션 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
               <button onClick={handleLike} disabled={!canLike} title={myId === null ? '로그인 후 좋아요 가능' : isOwner ? '내 댓글에는 좋아요 불가' : ''}
                 style={{ ...actionBtn(likedByMe), cursor: canLike ? 'pointer' : 'default' }}>
                 👍 {likes > 0 ? likes : ''}
               </button>
-              <button style={{ ...actionBtn() }}>답글</button>
+              {!isReply && (
+                <button onClick={handleReplyToggle} style={{ ...actionBtn(showReplyForm), cursor: myId ? 'pointer' : 'default' }}>답글</button>
+              )}
             </div>
+
+            {/* 답글 입력 폼 */}
+            {!isReply && showReplyForm && (
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <textarea
+                  ref={replyTextareaRef}
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  rows={2}
+                  placeholder="답글 추가..."
+                  onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleReplySubmit(); }}
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5, width: '100%', boxSizing: 'border-box' }}
+                />
+                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                  <button onClick={() => { setShowReplyForm(false); setReplyText(''); }}
+                    style={{ padding: '6px 12px', borderRadius: '16px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', fontSize: '12px', cursor: 'pointer' }}>
+                    취소
+                  </button>
+                  <button onClick={handleReplySubmit} disabled={!replyText.trim() || submittingReply}
+                    style={{ padding: '6px 12px', borderRadius: '16px', border: 'none', background: !replyText.trim() || submittingReply ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: !replyText.trim() || submittingReply ? 'not-allowed' : 'pointer' }}>
+                    {submittingReply ? '...' : '답글'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 답글 목록 토글 */}
+            {!isReply && replies.length > 0 && (
+              <div style={{ marginTop: '4px' }}>
+                <button onClick={() => setShowReplies(p => !p)}
+                  style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {showReplies ? `▲ 답글 ${replies.length}개 숨기기` : `▼ 답글 ${replies.length}개`}
+                </button>
+                {showReplies && (
+                  <div style={{ marginTop: '4px', paddingLeft: '8px', borderLeft: '2px solid #e5e7eb' }}>
+                    {replies.map(reply => (
+                      <CommentItem
+                        key={reply.id}
+                        comment={reply}
+                        myId={myId}
+                        onChanged={onChanged}
+                        isReply
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -258,6 +335,19 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
   const load = async () => { const res = await getComments(imageId); setComments(res.data); };
   useEffect(() => { load(); }, [imageId]);
 
+  const topLevelComments = comments.filter(c => !c.parent_id);
+  const repliesMap = new Map<string, Comment[]>();
+  comments.filter(c => c.parent_id != null).forEach(c => {
+    const arr = repliesMap.get(c.parent_id!) ?? [];
+    arr.push(c);
+    repliesMap.set(c.parent_id!, arr);
+  });
+
+  const handleReply = async (parentId: string, replyText: string) => {
+    await postComment(imageId, '', replyText, parentId);
+    await load();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
@@ -317,7 +407,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
         ) : (() => {
           const all = [
             ...responses.map(r => ({ kind: 'response' as const, ts: new Date(r.created_at).getTime(), score: r.votes, data: r })),
-            ...comments.map(c => ({ kind: 'comment' as const, ts: new Date(c.created_at).getTime(), score: c.likes ?? 0, data: c })),
+            ...topLevelComments.map(c => ({ kind: 'comment' as const, ts: new Date(c.created_at).getTime(), score: c.likes ?? 0, data: c })),
           ];
           const top = all.filter(i => i.score > 0).reduce<typeof all[0] | null>((b, c) => b === null || c.score > b.score ? c : b, null);
           const rest = all.filter(i => i !== top).sort((a, b) => b.ts - a.ts);
@@ -325,7 +415,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
           const renderItem = (item: typeof all[0]) =>
             item.kind === 'response'
               ? <VoiceItem key={`r-${item.data.id}`} response={item.data} myId={user?.id ?? null} onDeleted={() => onResponseAdded?.()} />
-              : <CommentItem key={`c-${item.data.id}`} comment={item.data} myId={user?.id ?? null} onChanged={load} />;
+              : <CommentItem key={`c-${item.data.id}`} comment={item.data} myId={user?.id ?? null} onChanged={load} replies={repliesMap.get(item.data.id) ?? []} onReply={handleReply} />;
 
           return (
             <>

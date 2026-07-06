@@ -17,7 +17,7 @@ router.get('/images/:imageId/comments', optionalAuth, async (req, res) => {
 
 router.post('/images/:imageId/comments', requireAuth, async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, parent_id } = req.body;
     if (!text?.trim()) return res.status(400).json({ error: '댓글 내용을 입력해주세요' });
 
     const image = await db.getImage(req.params.imageId);
@@ -30,6 +30,7 @@ router.post('/images/:imageId/comments', requireAuth, async (req, res) => {
       user_id: req.userId,
       nickname: user?.name ?? '익명',
       text: text.trim(),
+      parent_id: parent_id ?? null,
     });
     res.json(comment);
   } catch (err) {

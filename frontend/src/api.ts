@@ -21,8 +21,8 @@ export const vote = (responseId: string) => api.post(`/responses/${responseId}/v
 export const deleteResponse = (responseId: string) => api.delete(`/responses/${responseId}`);
 
 export const getComments = (imageId: string) => api.get(`/images/${imageId}/comments`);
-export const postComment = (imageId: string, nickname: string, text: string) =>
-  api.post(`/images/${imageId}/comments`, { nickname, text });
+export const postComment = (imageId: string, nickname: string, text: string, parentId?: string) =>
+  api.post(`/images/${imageId}/comments`, { nickname, text, parent_id: parentId ?? null });
 export const updateComment = (commentId: string, text: string) =>
   api.put(`/comments/${commentId}`, { text });
 export const deleteComment = (commentId: string) =>
