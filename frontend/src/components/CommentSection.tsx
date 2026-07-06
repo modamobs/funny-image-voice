@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Comment, Response } from '../types';
-import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, generateAiResponse, AUDIO_URL } from '../api';
+import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, previewAiResponse, confirmAiResponse, AUDIO_URL } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
 // 닉네임으로 아바타 배경색 결정
@@ -329,6 +329,8 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
   const [recordingSec, setRecordingSec] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiPreview, setAiPreview] = useState<{ audio_filename: string; ai_text: string } | null>(null);
+  const [aiConfirming, setAiConfirming] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -385,13 +387,25 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
   const handleAiResponse = async () => {
     setAiLoading(true);
     try {
-      await generateAiResponse(imageId);
-      onResponseAdded?.();
+      const res = await previewAiResponse(imageId);
+      setAiPreview(res.data);
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'AI 멘트 생성 실패';
       alert(msg);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const handleAiConfirm = async () => {
+    if (!aiPreview) return;
+    setAiConfirming(true);
+    try {
+      await confirmAiResponse(imageId, aiPreview.audio_filename, aiPreview.ai_text);
+      setAiPreview(null);
+      onResponseAdded?.();
+    } finally {
+      setAiConfirming(false);
     }
   };
 
@@ -509,6 +523,26 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
         )}
       </div>
 
+      {/* AI 멘트 미리보기 모달 */}
+      {aiPreview && (
+        <div onClick={() => !aiConfirming && setAiPreview(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '380px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#6366f1' }}>🤖 AI 멘트 미리보기</p>
+            <p style={{ margin: 0, fontSize: '16px', color: '#111827', lineHeight: 1.6, fontStyle: 'italic', textAlign: 'center' }}>"{aiPreview.ai_text}"</p>
+            <audio controls src={AUDIO_URL(aiPreview.audio_filename)} style={{ width: '100%', height: '36px' }} />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleAiConfirm} disabled={aiConfirming}
+                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: 'none', background: aiConfirming ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: aiConfirming ? 'not-allowed' : 'pointer' }}>
+                {aiConfirming ? '올리는 중...' : '✅ 올리기'}
+              </button>
+              <button onClick={() => setAiPreview(null)} disabled={aiConfirming}
+                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
