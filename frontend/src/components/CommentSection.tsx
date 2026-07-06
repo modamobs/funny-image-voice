@@ -27,6 +27,45 @@ function TimeLabel({ iso }: { iso: string }) {
   );
 }
 
+// ⋮ 드롭다운 메뉴
+function ThreeDotMenu({ items }: { items: { label: string; danger?: boolean; onClick: () => void }[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', marginLeft: 'auto' }}>
+      <button
+        onClick={() => setOpen(p => !p)}
+        style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1, borderRadius: '4px' }}
+      >
+        ⋮
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', background: '#fff', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', minWidth: '90px', zIndex: 100, overflow: 'hidden' }}>
+          {items.map(item => (
+            <button
+              key={item.label}
+              onClick={() => { item.onClick(); setOpen(false); }}
+              style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: item.danger ? '#ef4444' : '#374151', cursor: 'pointer' }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // 공통 확인 모달
 function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
   return (
@@ -104,10 +143,10 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
           <span style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>{comment.nickname}</span>
           <TimeLabel iso={comment.created_at} />
           {isOwner && !editing && (
-            <span style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
-              <button onClick={handleEdit} style={{ fontSize: '12px', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}>수정</button>
-              <button onClick={() => setConfirmDelete(true)} style={{ fontSize: '12px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>삭제</button>
-            </span>
+            <ThreeDotMenu items={[
+              { label: '수정', onClick: handleEdit },
+              { label: '삭제', danger: true, onClick: () => setConfirmDelete(true) },
+            ]} />
           )}
         </div>
 
@@ -173,7 +212,9 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
           <span style={{ fontWeight: 700, fontSize: '13px', color: isAi ? '#4338ca' : '#111827' }}>{displayName}</span>
           <TimeLabel iso={response.created_at} />
           {isOwner && (
-            <button onClick={() => setConfirmDelete(true)} style={{ marginLeft: 'auto', fontSize: '12px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>삭제</button>
+            <ThreeDotMenu items={[
+              { label: '삭제', danger: true, onClick: () => setConfirmDelete(true) },
+            ]} />
           )}
         </div>
         {/* AI 멘트 텍스트 */}
