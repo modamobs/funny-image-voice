@@ -2,7 +2,6 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const axios = require('axios');
 const OpenAI = require('openai');
 const db = require('../db');
 const { uploadToR2 } = require('../storage');
@@ -86,12 +85,15 @@ Rules: safe for all ages, visually clear, max 40 words, output only the English 
 
     const imagePrompt = promptRes.choices[0].message.content.trim();
 
-    // 2. Pollinations.ai로 이미지 생성 (API 키 불필요)
-    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+    // 2. gpt-image-1으로 이미지 생성 (base64 반환)
+    const imageRes = await openai.images.generate({
+      model: 'gpt-image-1',
+      prompt: imagePrompt,
+      n: 1,
+      size: '1024x1024',
+    });
 
-    // 3. 이미지 다운로드 후 R2 업로드
-    const { data: imageData } = await axios.get(pollinationsUrl, { responseType: 'arraybuffer', timeout: 60000 });
-    const imageBuffer = Buffer.from(imageData);
+    const imageBuffer = Buffer.from(imageRes.data[0].b64_json, 'base64');
     const r2Url = await uploadToR2(`images/${uuidv4()}.png`, imageBuffer, 'image/png');
 
     // 4. DB 저장 + 사용량 기록
