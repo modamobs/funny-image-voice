@@ -88,11 +88,10 @@ Rules: safe for all ages, visually clear, max 40 words, output only the English 
 
     // 2. DALL-E 3으로 이미지 생성
     const imageRes = await openai.images.generate({
-      model: 'dall-e-3',
+      model: 'dall-e-2',
       prompt: imagePrompt,
       n: 1,
       size: '1024x1024',
-      quality: 'standard',
     });
 
     const dalleUrl = imageRes.data[0].url;
