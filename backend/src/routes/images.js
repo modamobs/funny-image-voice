@@ -4,6 +4,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { uploadToR2 } = require('../storage');
+const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -24,9 +25,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const image = await db.getImage(req.params.id);
+    const image = await db.getImage(req.params.id, req.userId ?? null);
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
     res.json(image);
   } catch (err) {

@@ -112,11 +112,10 @@ router.delete('/responses/:id', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/responses/:responseId/vote', async (req, res) => {
+router.post('/responses/:responseId/vote', requireAuth, async (req, res) => {
   try {
-    const votes = await db.vote(req.params.responseId);
-    if (votes === null) return res.status(404).json({ error: '응답을 찾을 수 없습니다' });
-    res.json({ votes });
+    const result = await db.vote(req.params.responseId, req.userId);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

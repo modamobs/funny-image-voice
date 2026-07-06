@@ -165,7 +165,7 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
 // 음성 응답 카드 — 댓글과 동일한 레이아웃
 function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: string | null; onDeleted: () => void }) {
   const [votes, setVotes] = useState(response.votes);
-  const [voted, setVoted] = useState(false);
+  const [voted, setVoted] = useState(response.voted_by_me ?? false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isAi = response.type === 'ai';
   const displayName = isAi ? '🤖 AI' : (response.nickname ?? '익명');

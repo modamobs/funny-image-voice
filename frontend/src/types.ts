@@ -16,6 +16,7 @@ export interface Response {
   created_at: string;
   user_id: string | null;
   nickname: string | null;
+  voted_by_me: boolean;
 }
 
 export interface ImageDetail extends ImageItem {

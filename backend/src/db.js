@@ -57,6 +57,12 @@ async function init() {
     );
 
     ALTER TABLE responses ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id);
+
+    CREATE TABLE IF NOT EXISTS response_votes (
+      response_id TEXT NOT NULL REFERENCES responses(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (response_id, user_id)
+    );
   `);
 }
 
@@ -74,16 +80,18 @@ const db = {
     return rows;
   },
 
-  async getImage(id) {
+  async getImage(id, userId = null) {
     const { rows: images } = await pool.query('SELECT * FROM images WHERE id = $1', [id]);
     if (!images[0]) return null;
     const { rows: responses } = await pool.query(
-      `SELECT r.*, u.name AS nickname
+      `SELECT r.*, u.name AS nickname,
+              (rv.user_id IS NOT NULL) AS voted_by_me
        FROM responses r
        LEFT JOIN users u ON u.id = r.user_id
+       LEFT JOIN response_votes rv ON rv.response_id = r.id AND rv.user_id = $2
        WHERE r.image_id = $1
        ORDER BY r.created_at ASC`,
-      [id]
+      [id, userId]
     );
     return { ...images[0], responses };
   },
@@ -110,12 +118,21 @@ const db = {
     return rowCount > 0;
   },
 
-  async vote(responseId) {
+  async vote(responseId, userId) {
+    const { rowCount } = await pool.query(
+      'INSERT INTO response_votes (response_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [responseId, userId]
+    );
+    if (rowCount === 0) {
+      // 이미 투표함
+      const { rows } = await pool.query('SELECT votes FROM responses WHERE id = $1', [responseId]);
+      return { votes: rows[0]?.votes ?? 0, already_voted: true };
+    }
     const { rows } = await pool.query(
       'UPDATE responses SET votes = votes + 1 WHERE id = $1 RETURNING votes',
       [responseId]
     );
-    return rows[0]?.votes ?? null;
+    return { votes: rows[0]?.votes ?? 0, already_voted: false };
   },
 
   async getComments(imageId, userId = null) {
