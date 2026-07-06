@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getImages, uploadImage, IMAGE_URL } from '../api';
+import { getImages, uploadImage, generateAiImage, IMAGE_URL } from '../api';
 import type { ImageItem } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Home() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { user, loading, login, logout } = useAuth();
@@ -17,6 +19,22 @@ export default function Home() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const handleAiGenerate = async () => {
+    if (!user) { login(); return; }
+    setGenerating(true);
+    setGenError('');
+    try {
+      const res = await generateAiImage();
+      navigate(`/image/${res.data.id}`);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'AI 이미지 생성에 실패했습니다';
+      setGenError(msg);
+      setTimeout(() => setGenError(''), 4000);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,27 +81,47 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 업로드 버튼 */}
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 16px 16px' }}>
-        <button
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          style={{
-            padding: '16px 40px',
-            borderRadius: '50px',
-            border: 'none',
-            background: uploading ? '#9ca3af' : '#6366f1',
-            color: '#fff',
-            fontSize: '18px',
-            cursor: uploading ? 'not-allowed' : 'pointer',
-            fontWeight: 700,
-            boxShadow: '0 4px 14px rgba(99,102,241,0.4)',
-          }}
-        >
-          {uploading ? '업로드 중...' : '📸 이미지 올리기'}
-        </button>
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
+      {/* 업로드 / AI 생성 버튼 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 16px 16px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading || generating}
+            style={{
+              padding: '14px 32px', borderRadius: '50px', border: 'none',
+              background: uploading ? '#9ca3af' : '#6366f1', color: '#fff',
+              fontSize: '16px', cursor: uploading || generating ? 'not-allowed' : 'pointer',
+              fontWeight: 700, boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+            }}
+          >
+            {uploading ? '업로드 중...' : '📸 이미지 올리기'}
+          </button>
+
+          <button
+            onClick={handleAiGenerate}
+            disabled={generating || uploading}
+            style={{
+              padding: '14px 32px', borderRadius: '50px', border: 'none',
+              background: generating ? '#9ca3af' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+              color: '#fff', fontSize: '16px',
+              cursor: generating || uploading ? 'not-allowed' : 'pointer',
+              fontWeight: 700, boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
+              display: 'flex', alignItems: 'center', gap: '8px',
+            }}
+          >
+            {generating ? (
+              <>
+                <span style={{ display: 'inline-block', width: 16, height: 16, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                생성 중... (15~30초)
+              </>
+            ) : '🤖 AI 이미지 생성'}
+          </button>
+        </div>
+        {genError && (
+          <p style={{ margin: 0, color: '#ef4444', fontSize: '13px', fontWeight: 600 }}>{genError}</p>
+        )}
       </div>
+      <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
 
       {/* 이미지 그리드 */}
       <div

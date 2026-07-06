@@ -18,6 +18,10 @@ body {
   min-height: 100vh;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* 녹음 중 깜빡이는 빨간 점 */
 @keyframes blink {
   0%, 100% { opacity: 1; }

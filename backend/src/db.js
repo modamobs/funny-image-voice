@@ -64,6 +64,13 @@ async function init() {
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       PRIMARY KEY (response_id, user_id)
     );
+
+    CREATE TABLE IF NOT EXISTS ai_image_usage (
+      user_id TEXT NOT NULL REFERENCES users(id),
+      date DATE NOT NULL DEFAULT CURRENT_DATE,
+      count INTEGER DEFAULT 0,
+      PRIMARY KEY (user_id, date)
+    );
   `);
 }
 
@@ -221,6 +228,22 @@ const db = {
     await pool.query(
       `INSERT INTO ai_usage (user_id, date, count) VALUES ($1, CURRENT_DATE, 1)
        ON CONFLICT (user_id, date) DO UPDATE SET count = ai_usage.count + 1`,
+      [userId]
+    );
+  },
+
+  async getAiImageUsageToday(userId) {
+    const { rows } = await pool.query(
+      `SELECT count FROM ai_image_usage WHERE user_id = $1 AND date = CURRENT_DATE`,
+      [userId]
+    );
+    return rows[0]?.count ?? 0;
+  },
+
+  async incrementAiImageUsage(userId) {
+    await pool.query(
+      `INSERT INTO ai_image_usage (user_id, date, count) VALUES ($1, CURRENT_DATE, 1)
+       ON CONFLICT (user_id, date) DO UPDATE SET count = ai_image_usage.count + 1`,
       [userId]
     );
   },
