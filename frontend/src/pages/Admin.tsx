@@ -81,10 +81,10 @@ export default function Admin() {
     color: tab === t ? '#4338ca' : '#6b7280',
   });
 
-  const delBtn = (onClick: () => void): React.CSSProperties => ({
+  const delBtn: React.CSSProperties = {
     padding: '4px 10px', border: 'none', background: '#fee2e2', color: '#ef4444',
     borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
-  });
+  };
 
   const thStyle: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 700, color: '#6b7280', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' };
   const tdStyle: React.CSSProperties = { padding: '10px 12px', fontSize: '13px', color: '#374151', borderBottom: '1px solid #f3f4f6', verticalAlign: 'middle' };
@@ -170,7 +170,7 @@ export default function Admin() {
                       <td style={{ ...tdStyle, textAlign: 'center' }}>{img.response_count}</td>
                       <td style={{ ...tdStyle, textAlign: 'center' }}>{img.comment_count}</td>
                       <td style={tdStyle}>
-                        <button style={delBtn(() => {})} onClick={() => setConfirm({
+                        <button style={delBtn} onClick={() => setConfirm({
                           message: `"${img.original_name}" 이미지와 모든 반응/댓글을 삭제할까요?`,
                           onConfirm: async () => {
                             await adminDeleteImage(img.id);
@@ -236,7 +236,7 @@ export default function Admin() {
                       <td style={tdStyle}><span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: c.parent_id ? '#ede9fe' : '#f0fdf4', color: c.parent_id ? '#7c3aed' : '#16a34a', fontWeight: 700 }}>{c.parent_id ? '답글' : '댓글'}</span></td>
                       <td style={tdStyle}>{fmtDate(c.created_at)}</td>
                       <td style={tdStyle}>
-                        <button style={delBtn(() => {})} onClick={() => setConfirm({
+                        <button style={delBtn} onClick={() => setConfirm({
                           message: '이 댓글을 삭제할까요?',
                           onConfirm: async () => {
                             await adminDeleteComment(c.id);
@@ -276,7 +276,7 @@ export default function Admin() {
                       <td style={{ ...tdStyle, textAlign: 'center' }}>{r.votes}</td>
                       <td style={tdStyle}>{fmtDate(r.created_at)}</td>
                       <td style={tdStyle}>
-                        <button style={delBtn(() => {})} onClick={() => setConfirm({
+                        <button style={delBtn} onClick={() => setConfirm({
                           message: '이 음성반응을 삭제할까요?',
                           onConfirm: async () => {
                             await adminDeleteResponse(r.id);
