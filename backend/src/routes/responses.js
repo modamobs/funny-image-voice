@@ -102,6 +102,16 @@ router.post('/images/:imageId/user-response', requireAuth, uploadAudio.single('a
   }
 });
 
+router.delete('/responses/:id', requireAuth, async (req, res) => {
+  try {
+    const ok = await db.deleteResponse(req.params.id, req.userId);
+    if (!ok) return res.status(403).json({ error: '삭제 권한이 없습니다' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/responses/:responseId/vote', async (req, res) => {
   try {
     const votes = await db.vote(req.params.responseId);

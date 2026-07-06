@@ -102,6 +102,14 @@ const db = {
     );
   },
 
+  async deleteResponse(id, userId) {
+    const { rowCount } = await pool.query(
+      'DELETE FROM responses WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    return rowCount > 0;
+  },
+
   async vote(responseId) {
     const { rows } = await pool.query(
       'UPDATE responses SET votes = votes + 1 WHERE id = $1 RETURNING votes',

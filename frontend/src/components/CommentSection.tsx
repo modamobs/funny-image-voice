@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Comment, Response } from '../types';
-import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, AUDIO_URL } from '../api';
+import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, AUDIO_URL } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
 interface CommentItemProps {
@@ -107,16 +107,15 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
               display: 'flex', alignItems: 'center', gap: '4px',
               marginLeft: '12px', flexShrink: 0,
               padding: '4px 10px', borderRadius: '20px',
-              border: likedByMe ? '1.5px solid #f43f5e' : '1.5px solid #e5e7eb',
-              background: likedByMe ? '#fff1f2' : '#f9fafb',
-              color: likedByMe ? '#f43f5e' : '#9ca3af',
+              border: likedByMe ? '1.5px solid #f59e0b' : '1.5px solid #e5e7eb',
+              background: likedByMe ? '#fef3c7' : '#f9fafb',
+              color: likedByMe ? '#b45309' : '#9ca3af',
               fontSize: '13px', fontWeight: 600,
               cursor: canLike ? 'pointer' : 'default',
               transition: 'all 0.15s',
             }}
           >
-            <span style={{ fontSize: '14px' }}>{likedByMe ? '❤️' : '🤍'}</span>
-            {likes > 0 && <span>{likes}</span>}
+            👍 {likes > 0 && likes}
           </button>
         </div>
       )}
@@ -125,11 +124,12 @@ function CommentItem({ comment, myId, onChanged }: CommentItemProps) {
 }
 
 // 음성 응답 카드 — 댓글과 동일한 레이아웃
-function VoiceItem({ response }: { response: Response }) {
+function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: string | null; onDeleted: () => void }) {
   const [votes, setVotes] = useState(response.votes);
   const [voted, setVoted] = useState(false);
   const isAi = response.type === 'ai';
   const displayName = isAi ? '🤖 AI' : (response.nickname ?? '익명');
+  const isOwner = myId !== null && response.user_id === myId;
 
   const handleVote = async () => {
     if (voted) return;
@@ -138,14 +138,25 @@ function VoiceItem({ response }: { response: Response }) {
     setVoted(true);
   };
 
+  const handleDelete = async () => {
+    if (!confirm('음성을 삭제할까요?')) return;
+    await deleteResponse(response.id);
+    onDeleted();
+  };
+
   return (
     <div style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${isAi ? '#6366f1' : '#22c55e'}` }}>
-      {/* 헤더: 이름 + 시간 */}
+      {/* 헤더: 이름 + 시간 + 삭제 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <span style={{ fontWeight: 700, fontSize: '13px', color: isAi ? '#4338ca' : '#16a34a' }}>{displayName}</span>
-        <span style={{ fontSize: '11px', color: '#9ca3af' }}>
-          {new Date(response.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '11px', color: '#9ca3af' }}>
+            {new Date(response.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </span>
+          {isOwner && (
+            <button onClick={handleDelete} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #fca5a5', background: '#fff1f2', color: '#ef4444', cursor: 'pointer' }}>삭제</button>
+          )}
+        </div>
       </div>
       {/* AI 멘트 텍스트 */}
       {response.ai_text && (
@@ -157,9 +168,9 @@ function VoiceItem({ response }: { response: Response }) {
         <button
           onClick={handleVote}
           disabled={voted}
-          style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', border: `1.5px solid ${voted ? '#f59e0b' : '#e5e7eb'}`, background: voted ? '#fef3c7' : '#f9fafb', color: voted ? '#b45309' : '#9ca3af', fontSize: '13px', fontWeight: 600, cursor: voted ? 'default' : 'pointer', flexShrink: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', border: `1.5px solid ${voted ? '#f59e0b' : '#e5e7eb'}`, background: voted ? '#fef3c7' : '#f9fafb', color: voted ? '#b45309' : '#9ca3af', fontSize: '13px', fontWeight: 600, cursor: voted ? 'default' : 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
         >
-          👍 {votes > 0 ? votes : ''}
+          👍 {votes > 0 && votes}
         </button>
       </div>
     </div>
@@ -282,7 +293,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
             .sort((a, b) => a.ts - b.ts)
             .map((item) =>
               item.kind === 'response'
-                ? <VoiceItem key={`r-${item.data.id}`} response={item.data} />
+                ? <VoiceItem key={`r-${item.data.id}`} response={item.data} myId={user?.id ?? null} onDeleted={() => onResponseAdded?.()} />
                 : <CommentItem key={`c-${item.data.id}`} comment={item.data} myId={user?.id ?? null} onChanged={load} />
             )
         )}

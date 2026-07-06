@@ -18,6 +18,7 @@ export const uploadUserResponse = (imageId: string, blob: Blob) => {
   return api.post(`/images/${imageId}/user-response`, form);
 };
 export const vote = (responseId: string) => api.post(`/responses/${responseId}/vote`);
+export const deleteResponse = (responseId: string) => api.delete(`/responses/${responseId}`);
 
 export const getComments = (imageId: string) => api.get(`/images/${imageId}/comments`);
 export const postComment = (imageId: string, nickname: string, text: string) =>
