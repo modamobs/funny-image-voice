@@ -37,8 +37,8 @@ export default function ImageDetail() {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
 
         {/* 왼쪽: 이미지 */}
-        <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', background: '#000' }}>
+        <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', background: '#000', width: '100%' }}>
             <img
               src={IMAGE_URL(data.filename)}
               alt={data.original_name}
