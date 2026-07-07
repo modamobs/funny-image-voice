@@ -37,6 +37,10 @@ export const deleteComment = (commentId: string) =>
 export const likeComment = (commentId: string) =>
   api.post(`/comments/${commentId}/like`);
 
+export const profileGetImages = () => api.get('/profile/images');
+export const profileGetComments = () => api.get('/profile/comments');
+export const profileGetResponses = () => api.get('/profile/responses');
+
 export const adminGetStats = () => api.get('/admin/stats');
 export const adminGetImages = () => api.get('/admin/images');
 export const adminDeleteImage = (id: string) => api.delete(`/admin/images/${id}`);

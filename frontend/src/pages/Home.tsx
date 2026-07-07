@@ -75,7 +75,7 @@ export default function Home() {
           {!loading && (
             user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src={user.picture} alt={user.name} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)' }} />
+                <img src={user.picture} alt={user.name} onClick={() => navigate('/profile')} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)', cursor: 'pointer' }} />
                 <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>
                 {user.is_admin && (
                   <button onClick={() => navigate('/admin')} style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '13px', cursor: 'pointer' }}>

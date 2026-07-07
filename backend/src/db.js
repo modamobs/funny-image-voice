@@ -58,6 +58,7 @@ async function init() {
 
     ALTER TABLE responses ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id);
     ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES comments(id) ON DELETE CASCADE;
+    ALTER TABLE images ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id);
 
     CREATE TABLE IF NOT EXISTS response_votes (
       response_id TEXT NOT NULL REFERENCES responses(id) ON DELETE CASCADE,
@@ -104,10 +105,10 @@ const db = {
     return { ...images[0], responses };
   },
 
-  async addImage({ id, filename, original_name }) {
+  async addImage({ id, filename, original_name, user_id }) {
     await pool.query(
-      'INSERT INTO images (id, filename, original_name) VALUES ($1, $2, $3)',
-      [id, filename, original_name]
+      'INSERT INTO images (id, filename, original_name, user_id) VALUES ($1, $2, $3, $4)',
+      [id, filename, original_name, user_id ?? null]
     );
   },
 
@@ -325,6 +326,43 @@ const db = {
   async adminDeleteResponse(id) {
     const { rowCount } = await pool.query('DELETE FROM responses WHERE id = $1', [id]);
     return rowCount > 0;
+  },
+
+  async profileImages(userId) {
+    const { rows } = await pool.query(
+      `SELECT i.*, COUNT(r.id)::int AS response_count
+       FROM images i
+       LEFT JOIN responses r ON i.id = r.image_id
+       WHERE i.user_id = $1
+       GROUP BY i.id
+       ORDER BY i.created_at DESC`,
+      [userId]
+    );
+    return rows;
+  },
+
+  async profileComments(userId) {
+    const { rows } = await pool.query(
+      `SELECT c.*, i.filename AS image_filename, i.id AS image_id
+       FROM comments c
+       JOIN images i ON i.id = c.image_id
+       WHERE c.user_id = $1
+       ORDER BY c.created_at DESC`,
+      [userId]
+    );
+    return rows;
+  },
+
+  async profileResponses(userId) {
+    const { rows } = await pool.query(
+      `SELECT r.*, i.filename AS image_filename, i.id AS image_id
+       FROM responses r
+       JOIN images i ON i.id = r.image_id
+       WHERE r.user_id = $1
+       ORDER BY r.created_at DESC`,
+      [userId]
+    );
+    return rows;
   },
 };
 

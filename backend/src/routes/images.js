@@ -44,7 +44,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 });
 
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', optionalAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: '이미지를 선택해주세요' });
   try {
     const ext = path.extname(req.file.originalname);
@@ -52,7 +52,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     const url = await uploadToR2(filename, req.file.buffer, req.file.mimetype);
 
     const id = uuidv4();
-    await db.addImage({ id, filename: url, original_name: req.file.originalname });
+    await db.addImage({ id, filename: url, original_name: req.file.originalname, user_id: req.userId ?? null });
     res.json({ id, filename: url });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -113,7 +113,7 @@ router.post('/ai-confirm', requireAuth, async (req, res) => {
     const { filename, prompt } = req.body;
     if (!filename) return res.status(400).json({ error: '잘못된 요청입니다' });
     const id = uuidv4();
-    await db.addImage({ id, filename, original_name: `[AI] ${(prompt ?? '').slice(0, 80)}` });
+    await db.addImage({ id, filename, original_name: `[AI] ${(prompt ?? '').slice(0, 80)}`, user_id: req.userId });
     res.json({ id });
   } catch (err) {
     res.status(500).json({ error: err.message });
