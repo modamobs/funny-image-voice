@@ -3,6 +3,13 @@ import type { Comment, Response } from '../types';
 import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, previewAiResponse, confirmAiResponse, AUDIO_URL } from '../api';
 import { useAuth } from '../hooks/useAuth';
 
+function countryFlag(code: string | null) {
+  if (!code || code.length !== 2) return null;
+  return code.toUpperCase().split('').map(c =>
+    String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)
+  ).join('');
+}
+
 // 닉네임으로 아바타 배경색 결정
 const AVATAR_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#0ea5e9', '#f97316'];
 function avatarColor(name: string) {
@@ -168,6 +175,11 @@ function CommentItem({ comment, myId, onChanged, replies = [], onReply, isReply 
         {/* 헤더 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
           <span style={{ fontWeight: 700, fontSize: isReply ? '12px' : '13px', color: '#111827' }}>{comment.nickname}</span>
+          {comment.country_code && (
+            <span title={comment.country_code} style={{ fontSize: isReply ? '12px' : '14px', lineHeight: 1 }}>
+              {countryFlag(comment.country_code)}
+            </span>
+          )}
           <TimeLabel iso={comment.created_at} />
           {isOwner && !editing && (
             <ThreeDotMenu items={[

@@ -33,4 +33,5 @@ export interface Comment {
   likes: number;
   liked_by_me: boolean;
   parent_id: string | null;
+  country_code: string | null;
 }

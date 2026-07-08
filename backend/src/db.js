@@ -59,6 +59,7 @@ async function init() {
     ALTER TABLE responses ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id);
     ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES comments(id) ON DELETE CASCADE;
     ALTER TABLE images ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id);
+    ALTER TABLE comments ADD COLUMN IF NOT EXISTS country_code TEXT;
 
     CREATE TABLE IF NOT EXISTS response_votes (
       response_id TEXT NOT NULL REFERENCES responses(id) ON DELETE CASCADE,
@@ -159,10 +160,10 @@ const db = {
     return rows;
   },
 
-  async addComment({ id, image_id, user_id, nickname, text, parent_id }) {
+  async addComment({ id, image_id, user_id, nickname, text, parent_id, country_code }) {
     const { rows } = await pool.query(
-      'INSERT INTO comments (id, image_id, user_id, nickname, text, parent_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [id, image_id, user_id, nickname, text, parent_id ?? null]
+      'INSERT INTO comments (id, image_id, user_id, nickname, text, parent_id, country_code) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [id, image_id, user_id, nickname, text, parent_id ?? null, country_code ?? null]
     );
     return rows[0];
   },
