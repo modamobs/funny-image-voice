@@ -17,22 +17,64 @@ router.get('/google', (req, res) => {
     || (/Android/i.test(ua) && /wv/.test(ua));
 
   if (isInApp) {
-    return res.send(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    const frontendUrl = process.env.FRONTEND_URL ?? '';
+    const host = frontendUrl.replace(/^https?:\/\//, '');
+    return res.send(`<!DOCTYPE html><html><head>
+      <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>브라우저에서 열기</title></head>
-      <body style="font-family:sans-serif;text-align:center;padding:60px 24px;background:#f9fafb">
-        <p style="font-size:48px;margin:0">🌐</p>
-        <h2 style="color:#111827;margin:16px 0 8px">외부 브라우저에서 열어주세요</h2>
-        <p style="color:#6b7280;line-height:1.6;margin:0 0 24px">
-          카카오톡·인스타그램 등 앱 내 브라우저에서는<br>구글 로그인이 차단됩니다.
-        </p>
-        <a href="${process.env.FRONTEND_URL}" style="display:inline-block;padding:12px 28px;background:#4338ca;color:#fff;border-radius:24px;text-decoration:none;font-weight:700;font-size:15px">
-          크롬/사파리로 열기
+      <title>브라우저에서 열기</title>
+      <style>
+        body{font-family:-apple-system,sans-serif;text-align:center;padding:60px 24px;background:#f9fafb;margin:0}
+        h2{color:#111827;margin:16px 0 8px;font-size:20px}
+        p{color:#6b7280;line-height:1.6;margin:0}
+        .btn{display:inline-block;margin-top:24px;padding:14px 32px;background:#4338ca;color:#fff;border-radius:24px;text-decoration:none;font-weight:700;font-size:16px}
+        .url-box{margin-top:24px;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:12px 16px;word-break:break-all;font-size:14px;color:#374151}
+        .copy-btn{margin-top:12px;padding:10px 24px;background:#6366f1;color:#fff;border:none;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer}
+        .tip{margin-top:16px;font-size:12px;color:#9ca3af}
+      </style>
+    </head>
+    <body>
+      <p style="font-size:52px;margin:0">🌐</p>
+      <h2>외부 브라우저에서 열어주세요</h2>
+      <p>카카오톡·인스타그램 등 앱 내 브라우저에서는<br>구글 로그인이 차단됩니다.</p>
+
+      <div id="android-section" style="display:none">
+        <a id="intent-btn" class="btn" href="intent://${host}#Intent;scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=com.android.chrome;end">
+          크롬으로 열기
         </a>
-        <p style="margin-top:20px;color:#9ca3af;font-size:13px">
-          주소: ${process.env.FRONTEND_URL}
-        </p>
-      </body></html>`);
+        <p class="tip">버튼이 작동하지 않으면 아래 주소를 복사해 크롬에 붙여넣으세요</p>
+      </div>
+
+      <div id="ios-section" style="display:none">
+        <p style="margin-top:20px;font-weight:600;color:#374151">아래 주소를 복사 후 사파리에서 열어주세요</p>
+      </div>
+
+      <div class="url-box" id="url-text">${frontendUrl}</div>
+      <button class="copy-btn" onclick="copyUrl()">📋 주소 복사</button>
+      <p class="tip" id="copy-done" style="display:none;color:#10b981;font-weight:600">복사됐어요!</p>
+
+      <script>
+        const ua = navigator.userAgent;
+        if (/Android/i.test(ua)) {
+          document.getElementById('android-section').style.display = 'block';
+        } else if (/iPhone|iPad|iPod/i.test(ua)) {
+          document.getElementById('ios-section').style.display = 'block';
+        }
+        function copyUrl() {
+          navigator.clipboard.writeText('${frontendUrl}').then(function() {
+            document.getElementById('copy-done').style.display = 'block';
+          }).catch(function() {
+            const el = document.getElementById('url-text');
+            const range = document.createRange();
+            range.selectNode(el);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            document.getElementById('copy-done').style.display = 'block';
+          });
+        }
+      </script>
+    </body></html>`);
   }
 
   const params = new URLSearchParams({
