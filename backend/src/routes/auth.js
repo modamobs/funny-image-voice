@@ -12,6 +12,29 @@ const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 
 // Google 로그인 시작
 router.get('/google', (req, res) => {
+  const ua = req.headers['user-agent'] ?? '';
+  const isInApp = /KAKAOTALK|NAVER|Line\/|FBAN|FBAV|FB_IAB|Instagram|Twitter|Snapchat/i.test(ua)
+    || (/Android/i.test(ua) && /wv/.test(ua));
+
+  if (isInApp) {
+    return res.send(`<!DOCTYPE html><html><head><meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>브라우저에서 열기</title></head>
+      <body style="font-family:sans-serif;text-align:center;padding:60px 24px;background:#f9fafb">
+        <p style="font-size:48px;margin:0">🌐</p>
+        <h2 style="color:#111827;margin:16px 0 8px">외부 브라우저에서 열어주세요</h2>
+        <p style="color:#6b7280;line-height:1.6;margin:0 0 24px">
+          카카오톡·인스타그램 등 앱 내 브라우저에서는<br>구글 로그인이 차단됩니다.
+        </p>
+        <a href="${process.env.FRONTEND_URL}" style="display:inline-block;padding:12px 28px;background:#4338ca;color:#fff;border-radius:24px;text-decoration:none;font-weight:700;font-size:15px">
+          크롬/사파리로 열기
+        </a>
+        <p style="margin-top:20px;color:#9ca3af;font-size:13px">
+          주소: ${process.env.FRONTEND_URL}
+        </p>
+      </body></html>`);
+  }
+
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
     redirect_uri: process.env.GOOGLE_CALLBACK_URL,
