@@ -21,6 +21,7 @@ export interface Response {
 
 export interface ImageDetail extends ImageItem {
   responses: Response[];
+  user_id: string | null;
 }
 
 export interface Comment {

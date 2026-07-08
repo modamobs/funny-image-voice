@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getImage, getImages, IMAGE_URL } from '../api';
+import { getImage, getImages, deleteImage, IMAGE_URL } from '../api';
 import type { ImageDetail as ImageDetailType, ImageItem } from '../types';
 import CommentSection from '../components/CommentSection';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useAuth } from '../hooks/useAuth';
 
 export default function ImageDetail() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,21 @@ export default function ImageDetail() {
   const stripRef = useRef<HTMLDivElement>(null);
   const activeThumbRef = useRef<HTMLButtonElement | null>(null);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await deleteImage(id);
+      navigate('/');
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   const load = async () => {
     if (!id) return;
@@ -55,6 +71,21 @@ export default function ImageDetail() {
   };
 
   if (!data) return <div style={{ textAlign: 'center', padding: '80px', color: '#6b7280' }}>로딩 중...</div>;
+
+  /* ── 삭제 확인 모달 (공통) ── */
+  const DeleteModal = confirmDelete ? (
+    <div onClick={() => !deleting && setConfirmDelete(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '20px', padding: '28px 24px 20px', width: '100%', maxWidth: '320px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <p style={{ margin: 0, fontSize: '15px', color: '#111827', textAlign: 'center', lineHeight: 1.6 }}>이 이미지를 삭제할까요?<br /><span style={{ fontSize: '13px', color: '#6b7280' }}>댓글과 멘트도 함께 삭제됩니다.</span></p>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={() => setConfirmDelete(false)} disabled={deleting} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>취소</button>
+          <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: deleting ? '#d1d5db' : '#ef4444', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer' }}>
+            {deleting ? '삭제 중...' : '삭제'}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   /* ── 썸네일 스트립 (공통) ── */
   const ThumbnailStrip = (
@@ -98,6 +129,7 @@ export default function ImageDetail() {
   if (isMobile) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f9fafb' }}>
+        {DeleteModal}
         {/* 상단 바 */}
         <div style={{ background: '#4338ca', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 }}>
           <button
@@ -110,6 +142,14 @@ export default function ImageDetail() {
             <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
               {currentIndex + 1} / {imageList.length}
             </span>
+          )}
+          {user && data.user_id === user.id && (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              style={{ marginLeft: 'auto', background: 'rgba(239,68,68,0.8)', border: 'none', borderRadius: '8px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
+            >
+              🗑 삭제
+            </button>
           )}
         </div>
 
@@ -148,6 +188,7 @@ export default function ImageDetail() {
   /* ══════════════ 데스크탑 레이아웃 ══════════════ */
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f3f4f6', overflow: 'hidden' }}>
+      {DeleteModal}
       {/* 상단 바 */}
       <div style={{ background: '#4338ca', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         <button
@@ -160,6 +201,14 @@ export default function ImageDetail() {
           <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
             {currentIndex + 1} / {imageList.length}
           </span>
+        )}
+        {user && data.user_id === user.id && (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            style={{ marginLeft: 'auto', background: 'rgba(239,68,68,0.8)', border: 'none', borderRadius: '8px', color: '#fff', padding: '6px 14px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
+          >
+            🗑 삭제
+          </button>
         )}
       </div>
 

@@ -120,4 +120,16 @@ router.post('/ai-confirm', requireAuth, async (req, res) => {
   }
 });
 
+router.delete('/:id', requireAuth, async (req, res) => {
+  try {
+    const image = await db.getImage(req.params.id);
+    if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
+    if (image.user_id !== req.userId) return res.status(403).json({ error: '삭제 권한이 없습니다' });
+    await db.adminDeleteImage(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
