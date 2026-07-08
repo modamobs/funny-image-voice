@@ -546,15 +546,19 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
             <p style={{ margin: 0, fontSize: '16px', color: '#111827', lineHeight: 1.6, fontStyle: 'italic', textAlign: 'center' }}>"{aiPreview.ai_text}"</p>
             <audio controls src={AUDIO_URL(aiPreview.audio_filename)} style={{ width: '100%', height: '36px' }} />
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={handleAiConfirm} disabled={aiConfirming}
-                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: 'none', background: aiConfirming ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: aiConfirming ? 'not-allowed' : 'pointer' }}>
+              <button onClick={handleAiConfirm} disabled={aiConfirming || aiLoading}
+                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: 'none', background: aiConfirming || aiLoading ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: aiConfirming || aiLoading ? 'not-allowed' : 'pointer' }}>
                 {aiConfirming ? '올리는 중...' : '✅ 올리기'}
               </button>
-              <button onClick={() => setAiPreview(null)} disabled={aiConfirming}
-                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
-                취소
+              <button onClick={handleAiResponse} disabled={aiLoading || aiConfirming}
+                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: aiLoading || aiConfirming ? '#f3f4f6' : '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: aiLoading || aiConfirming ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                {aiLoading ? '⏳ 생성 중...' : '🔄 다시 생성'}
               </button>
             </div>
+            <button onClick={() => setAiPreview(null)} disabled={aiConfirming}
+              style={{ padding: '8px', borderRadius: '10px', border: 'none', background: 'none', color: '#9ca3af', fontSize: '13px', cursor: 'pointer', alignSelf: 'center' }}>
+              취소
+            </button>
           </div>
         </div>
       )}
