@@ -84,7 +84,7 @@ export default function ImageDetail() {
         >
           {/* 메인 이미지 */}
           <div style={{ flex: 1, overflow: 'hidden', padding: '20px 20px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', background: '#000', width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}>
+            <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', background: '#fff', width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}>
               <img
                 src={IMAGE_URL(data.filename)}
                 alt={data.original_name}
