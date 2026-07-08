@@ -98,7 +98,7 @@ export default function ImageDetail() {
             <div
               ref={stripRef}
               style={{
-                display: 'flex', gap: '8px', padding: '0 20px 16px',
+                display: 'flex', gap: '8px', padding: '6px 20px 16px',
                 overflowX: 'auto', flexShrink: 0,
                 scrollbarWidth: 'none',
               }}
