@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getImages, uploadImage, previewAiImage, confirmAiImage, IMAGE_URL } from '../api';
 import type { ImageItem } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function Home() {
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -14,6 +15,7 @@ export default function Home() {
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { user, loading, login, logout } = useAuth();
+  const isMobile = useIsMobile();
 
   const load = async () => {
     const res = await getImages();
@@ -66,29 +68,29 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       {/* 헤더 */}
-      <div style={{ background: '#4338ca', padding: '20px 24px', color: '#fff' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '24px' }}>🎤 이미지 개그 대결</h1>
-            <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: '14px' }}>이미지를 올리고 웃긴 멘트를 달아보세요!</p>
+      <div style={{ background: '#4338ca', padding: isMobile ? '14px 16px' : '20px 24px', color: '#fff' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px', whiteSpace: 'nowrap' }}>🎤 이미지 개그 대결</h1>
+            {!isMobile && <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: '14px' }}>이미지를 올리고 웃긴 멘트를 달아보세요!</p>}
           </div>
           {!loading && (
             user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src={user.picture} alt={user.name} onClick={() => navigate('/profile')} style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)', cursor: 'pointer' }} />
-                <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <img src={user.picture} alt={user.name} onClick={() => navigate('/profile')} style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)', cursor: 'pointer', flexShrink: 0 }} />
+                {!isMobile && <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>}
                 {user.is_admin && (
-                  <button onClick={() => navigate('/admin')} style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '13px', cursor: 'pointer' }}>
-                    🛠 관리
+                  <button onClick={() => navigate('/admin')} style={{ padding: '5px 10px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>
+                    🛠{!isMobile && ' 관리'}
                   </button>
                 )}
-                <button onClick={logout} style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '13px', cursor: 'pointer' }}>
-                  로그아웃
+                <button onClick={logout} style={{ padding: '5px 10px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>
+                  {isMobile ? '로그아웃' : '로그아웃'}
                 </button>
               </div>
             ) : (
-              <button onClick={login} style={{ padding: '8px 20px', borderRadius: '20px', border: 'none', background: '#fff', color: '#4338ca', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
+              <button onClick={login} style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', background: '#fff', color: '#4338ca', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14, height: 14 }} />
                 Google 로그인
               </button>
             )
@@ -97,15 +99,17 @@ export default function Home() {
       </div>
 
       {/* 업로드 / AI 생성 버튼 */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 16px 16px' }}>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: isMobile ? '20px 16px 12px' : '32px 16px 16px' }}>
+        <div style={{ display: 'flex', gap: '10px', width: isMobile ? '100%' : 'auto', flexWrap: isMobile ? undefined : 'wrap', justifyContent: 'center' }}>
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading || generating}
             style={{
-              padding: '14px 32px', borderRadius: '50px', border: 'none',
+              padding: isMobile ? '13px 0' : '14px 32px',
+              flex: isMobile ? 1 : undefined,
+              borderRadius: '50px', border: 'none',
               background: uploading ? '#9ca3af' : '#6366f1', color: '#fff',
-              fontSize: '16px', cursor: uploading || generating ? 'not-allowed' : 'pointer',
+              fontSize: '15px', cursor: uploading || generating ? 'not-allowed' : 'pointer',
               fontWeight: 700, boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
             }}
           >
@@ -116,18 +120,20 @@ export default function Home() {
             onClick={handleAiGenerate}
             disabled={generating || uploading}
             style={{
-              padding: '14px 32px', borderRadius: '50px', border: 'none',
+              padding: isMobile ? '13px 0' : '14px 32px',
+              flex: isMobile ? 1 : undefined,
+              borderRadius: '50px', border: 'none',
               background: generating ? '#9ca3af' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
-              color: '#fff', fontSize: '16px',
+              color: '#fff', fontSize: '15px',
               cursor: generating || uploading ? 'not-allowed' : 'pointer',
               fontWeight: 700, boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
-              display: 'flex', alignItems: 'center', gap: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             }}
           >
             {generating ? (
               <>
-                <span style={{ display: 'inline-block', width: 16, height: 16, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                생성 중... (15~30초)
+                <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                생성 중...
               </>
             ) : '🤖 AI 이미지 생성'}
           </button>
@@ -176,9 +182,9 @@ export default function Home() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: '20px',
-          padding: '16px 24px 40px',
+          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: isMobile ? '12px' : '20px',
+          padding: isMobile ? '12px 12px 40px' : '16px 24px 40px',
           maxWidth: '1100px',
           margin: '0 auto',
         }}
@@ -213,7 +219,7 @@ export default function Home() {
             <img
               src={IMAGE_URL(img.filename)}
               alt={img.original_name}
-              style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block' }}
+              style={{ width: '100%', height: isMobile ? '140px' : '200px', objectFit: 'cover', display: 'block' }}
             />
             <div style={{ padding: '10px 16px' }}>
               <p style={{ margin: 0, color: '#6b7280', fontSize: '13px' }}>

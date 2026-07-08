@@ -315,9 +315,10 @@ interface Props {
   imageId: string;
   responses: Response[];
   onResponseAdded?: () => void;
+  mobile?: boolean;
 }
 
-export default function CommentSection({ imageId, responses, onResponseAdded }: Props) {
+export default function CommentSection({ imageId, responses, onResponseAdded, mobile = false }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const { user, login } = useAuth();
   const [text, setText] = useState('');
@@ -418,7 +419,10 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <div style={mobile
+      ? { display: 'flex', flexDirection: 'column', background: '#fff' }
+      : { height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }
+    }>
 
       {/* 헤더 */}
       <div style={{ padding: '16px 20px 12px', flexShrink: 0, borderBottom: '1px solid #f3f4f6' }}>
@@ -428,7 +432,10 @@ export default function CommentSection({ imageId, responses, onResponseAdded }: 
       </div>
 
       {/* 통합 피드 */}
-      <div ref={listRef} className="hover-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 16px', minHeight: 0 }}>
+      <div ref={listRef} className="hover-scrollbar" style={mobile
+        ? { padding: '0 16px' }
+        : { flex: 1, overflowY: 'auto', padding: '0 16px', minHeight: 0 }
+      }>
         {responses.length === 0 && comments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>첫 번째 반응을 남겨보세요!</div>
         ) : (() => {
