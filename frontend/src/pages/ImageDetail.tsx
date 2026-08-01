@@ -185,64 +185,79 @@ export default function ImageDetail() {
     );
   }
 
-  /* ══════════════ 데스크탑 레이아웃 ══════════════ */
+  /* ══════════════ 데스크탑 레이아웃 (핀터레스트 스타일) ══════════════ */
+  const relatedImages = imageList.filter(img => img.id !== id);
+
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f3f4f6', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#fff' }}>
       {DeleteModal}
-      {/* 상단 바 */}
-      <div style={{ background: '#4338ca', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+
+      {/* 상단 플로팅 바 */}
+      <div style={{ maxWidth: '1060px', margin: '0 auto', padding: '16px 20px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button
           onClick={() => navigate('/')}
-          style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontSize: '13px' }}
+          title="목록으로"
+          style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: '#f3f4f6', color: '#111827', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}
         >
-          ← 목록
+          ←
         </button>
-        {currentIndex >= 0 && (
-          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
-            {currentIndex + 1} / {imageList.length}
-          </span>
-        )}
         {user && data.user_id === user.id && (
           <button
             onClick={() => setConfirmDelete(true)}
-            style={{ marginLeft: 'auto', background: 'rgba(239,68,68,0.8)', border: 'none', borderRadius: '8px', color: '#fff', padding: '6px 14px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
+            style={{ marginLeft: 'auto', padding: '10px 18px', borderRadius: '24px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
           >
             🗑 삭제
           </button>
         )}
       </div>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
-        {/* 왼쪽: 이미지 + 썸네일 스트립 */}
-        <div
-          style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
-          <div style={{ flex: 1, overflow: 'hidden', padding: '20px 20px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', background: '#fff', width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}>
-              <img
-                src={IMAGE_URL(data.filename)}
-                alt={data.original_name}
-                style={{ width: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
-              />
-            </div>
-          </div>
-          {ThumbnailStrip}
-        </div>
-
-        <div style={{ width: '1px', background: '#e5e7eb', flexShrink: 0 }} />
-
-        <div style={{ width: 'clamp(300px, 35vw, 420px)', flexShrink: 0, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
-          {id && (
-            <CommentSection
-              imageId={id}
-              responses={data.responses}
-              onResponseAdded={load}
+      {/* 중앙 카드: 이미지 + 댓글 패널 */}
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 20px 8px' }}>
+        <div style={{ display: 'flex', width: '100%', maxWidth: '1020px', height: '76vh', minHeight: '480px', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.16)', border: '1px solid #f3f4f6', background: '#fff' }}>
+          {/* 왼쪽: 이미지 */}
+          <div style={{ flex: 1, minWidth: 0, background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img
+              src={IMAGE_URL(data.filename)}
+              alt={data.original_name}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
             />
-          )}
+          </div>
+
+          {/* 오른쪽: 댓글 패널 */}
+          <div style={{ width: 'clamp(320px, 38%, 440px)', flexShrink: 0, borderLeft: '1px solid #f3f4f6', background: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {id && (
+              <CommentSection
+                imageId={id}
+                responses={data.responses}
+                onResponseAdded={load}
+              />
+            )}
+          </div>
         </div>
       </div>
+
+      {/* 아래: 다른 이미지 매소너리 */}
+      {relatedImages.length > 0 && (
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 24px 60px' }}>
+          <h3 style={{ textAlign: 'center', fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 20px' }}>더 볼만한 이미지</h3>
+          <div style={{ columnWidth: '200px', columnGap: '14px' }}>
+            {relatedImages.map(img => (
+              <div
+                key={img.id}
+                onClick={() => { goTo(img.id); window.scrollTo({ top: 0 }); }}
+                style={{ breakInside: 'avoid', marginBottom: '14px', borderRadius: '16px', overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}
+              >
+                <img
+                  src={IMAGE_URL(img.filename)}
+                  alt={img.original_name}
+                  loading="lazy"
+                  style={{ width: '100%', display: 'block' }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
