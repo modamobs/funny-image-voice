@@ -7,7 +7,14 @@ const db = require('../db');
 const { uploadToR2 } = require('../storage');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 
-const AI_IMAGE_DAILY_LIMIT = 3;
+// AI 이미지(gpt-image-1) 원가는 AI 멘트의 30~60배라 무료로 열어두면 유저 수에 비례해 적자가 난다.
+// 결제/리워드 광고가 붙기 전까지 무료 제공 중단(기본 0 = 비활성). 환경변수로 다시 열 수 있다.
+const AI_IMAGE_DAILY_LIMIT = Number(process.env.AI_IMAGE_DAILY_LIMIT ?? 0);
+const AI_IMAGE_ENABLED = AI_IMAGE_DAILY_LIMIT > 0;
+const AI_IMAGE_DISABLED_RES = {
+  error: 'AI 이미지 생성은 현재 제공하지 않습니다. 직접 이미지를 올려주세요!',
+  code: 'AI_IMAGE_DISABLED',
+};
 
 let _openai = null;
 function getOpenAI() {
@@ -62,6 +69,8 @@ router.post('/', optionalAuth, upload.single('image'), async (req, res) => {
 // 1단계: 이미지 생성 + R2 업로드 (DB 저장 없음) → 미리보기용
 router.post('/ai-preview', requireAuth, async (req, res) => {
   try {
+    if (!AI_IMAGE_ENABLED) return res.status(402).json(AI_IMAGE_DISABLED_RES);
+
     const usage = await db.getAiImageUsageToday(req.userId);
     if (usage >= AI_IMAGE_DAILY_LIMIT) {
       return res.status(429).json({ error: `AI 이미지는 하루 ${AI_IMAGE_DAILY_LIMIT}회까지만 생성할 수 있습니다` });
@@ -110,6 +119,8 @@ Rules: safe for all ages, visually clear, max 40 words, output only the English 
 // 2단계: 미리보기 확인 후 DB에 저장
 router.post('/ai-confirm', requireAuth, async (req, res) => {
   try {
+    if (!AI_IMAGE_ENABLED) return res.status(402).json(AI_IMAGE_DISABLED_RES);
+
     const { filename, prompt } = req.body;
     if (!filename) return res.status(400).json({ error: '잘못된 요청입니다' });
     const id = uuidv4();

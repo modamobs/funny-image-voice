@@ -4,6 +4,10 @@ import { getImages, uploadImage, previewAiImage, confirmAiImage, IMAGE_URL } fro
 import type { ImageItem } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useIsMobile } from '../hooks/useIsMobile';
+import TodayRound from '../components/TodayRound';
+
+// 백엔드에서 무료 제공을 중단한 기능. 다시 열 때 VITE_AI_IMAGE_ENABLED=true 로 켠다.
+const AI_IMAGE_ENABLED = import.meta.env.VITE_AI_IMAGE_ENABLED === 'true';
 
 export default function Home() {
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -98,6 +102,9 @@ export default function Home() {
         </div>
       </div>
 
+      {/* 오늘의 짤 — 하루 한 판, 모두가 같은 이미지에 멘트를 단다 */}
+      <TodayRound isMobile={isMobile} />
+
       {/* 업로드 / AI 생성 버튼 */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: isMobile ? '20px 16px 12px' : '32px 16px 16px' }}>
         <div style={{ display: 'flex', gap: '10px', width: isMobile ? '100%' : 'auto', flexWrap: isMobile ? undefined : 'wrap', justifyContent: 'center' }}>
@@ -116,27 +123,29 @@ export default function Home() {
             {uploading ? '업로드 중...' : '📸 이미지 올리기'}
           </button>
 
-          <button
-            onClick={handleAiGenerate}
-            disabled={generating || uploading}
-            style={{
-              padding: isMobile ? '13px 0' : '14px 32px',
-              flex: isMobile ? 1 : undefined,
-              borderRadius: '50px', border: 'none',
-              background: generating ? '#9ca3af' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
-              color: '#fff', fontSize: '15px',
-              cursor: generating || uploading ? 'not-allowed' : 'pointer',
-              fontWeight: 700, boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            }}
-          >
-            {generating ? (
-              <>
-                <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                생성 중...
-              </>
-            ) : '🤖 AI 이미지 생성'}
-          </button>
+          {AI_IMAGE_ENABLED && (
+            <button
+              onClick={handleAiGenerate}
+              disabled={generating || uploading}
+              style={{
+                padding: isMobile ? '13px 0' : '14px 32px',
+                flex: isMobile ? 1 : undefined,
+                borderRadius: '50px', border: 'none',
+                background: generating ? '#9ca3af' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                color: '#fff', fontSize: '15px',
+                cursor: generating || uploading ? 'not-allowed' : 'pointer',
+                fontWeight: 700, boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              }}
+            >
+              {generating ? (
+                <>
+                  <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  생성 중...
+                </>
+              ) : '🤖 AI 이미지 생성'}
+            </button>
+          )}
         </div>
         {genError && (
           <p style={{ margin: 0, color: '#ef4444', fontSize: '13px', fontWeight: 600 }}>{genError}</p>
@@ -178,7 +187,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* 이미지 매소너리 그리드 */}
+      {/* 지난 짤 그리드 */}
+      {images.length > 0 && (
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '4px 16px 0' : '8px 24px 0' }}>
+          <h2 style={{ margin: 0, fontSize: isMobile ? '15px' : '17px', fontWeight: 700, color: '#374151' }}>
+            지난 짤
+          </h2>
+        </div>
+      )}
       {images.length === 0 ? (
         <div style={{ textAlign: 'center', color: '#9ca3af', padding: '60px 0' }}>
           <p style={{ fontSize: '48px', margin: 0 }}>🖼</p>

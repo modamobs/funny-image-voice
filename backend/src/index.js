@@ -10,6 +10,7 @@ const commentsRouter = require('./routes/comments');
 const authRouter = require('./routes/auth');
 const adminRouter = require('./routes/admin');
 const profileRouter = require('./routes/profile');
+const roundsRouter = require('./routes/rounds');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +32,7 @@ app.use('/api', responsesRouter);
 app.use('/api', commentsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/profile', profileRouter);
+app.use('/api/rounds', roundsRouter);
 
 db.init().then(() => {
   app.listen(PORT, () => console.log(`서버 실행 중: http://localhost:${PORT}`));

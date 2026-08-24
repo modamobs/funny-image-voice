@@ -39,6 +39,10 @@ export const likeComment = (commentId: string) =>
 
 export const deleteImage = (id: string) => api.delete(`/images/${id}`);
 
+export const getTodayRound = () => api.get('/rounds/today');
+export const getRounds = (limit = 30) => api.get('/rounds', { params: { limit } });
+export const getRoundLeaderboard = (id: string) => api.get(`/rounds/${id}/leaderboard`);
+
 export const profileGetImages = () => api.get('/profile/images');
 export const profileGetComments = () => api.get('/profile/comments');
 export const profileGetResponses = () => api.get('/profile/responses');

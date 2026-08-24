@@ -86,8 +86,12 @@ router.post('/images/:imageId/ai-response-confirm', requireAuth, async (req, res
   try {
     const { audio_filename, ai_text } = req.body;
     if (!audio_filename) return res.status(400).json({ error: '잘못된 요청입니다' });
+    const round = await db.getOpenRoundForImage(req.params.imageId);
     const responseId = uuidv4();
-    await db.addResponse({ id: responseId, image_id: req.params.imageId, type: 'ai', audio_filename, ai_text, user_id: req.userId });
+    await db.addResponse({
+      id: responseId, image_id: req.params.imageId, type: 'ai',
+      audio_filename, ai_text, user_id: req.userId, round_id: round?.id ?? null,
+    });
     res.json({ id: responseId, type: 'ai', ai_text, audio_filename });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -118,8 +122,12 @@ router.post('/images/:imageId/ai-response', requireAuth, async (req, res) => {
     const ttsResponse = await openai.audio.speech.create({ model: 'tts-1', voice: 'onyx', input: funnyText, speed: 1.1 });
     await db.incrementAiUsage(req.userId);
     const audioUrl = await uploadToR2(`audio/${uuidv4()}.mp3`, Buffer.from(await ttsResponse.arrayBuffer()), 'audio/mpeg');
+    const round = await db.getOpenRoundForImage(req.params.imageId);
     const responseId = uuidv4();
-    await db.addResponse({ id: responseId, image_id: req.params.imageId, type: 'ai', audio_filename: audioUrl, ai_text: funnyText, user_id: req.userId });
+    await db.addResponse({
+      id: responseId, image_id: req.params.imageId, type: 'ai',
+      audio_filename: audioUrl, ai_text: funnyText, user_id: req.userId, round_id: round?.id ?? null,
+    });
     res.json({ id: responseId, type: 'ai', ai_text: funnyText, audio_filename: audioUrl });
   } catch (err) {
     console.error(err);
@@ -136,10 +144,14 @@ router.post('/images/:imageId/user-response', requireAuth, uploadAudio.single('a
     const audioKey = `audio/${uuidv4()}.webm`;
     const audioUrl = await uploadToR2(audioKey, req.file.buffer, 'audio/webm');
 
+    const round = await db.getOpenRoundForImage(req.params.imageId);
     const responseId = uuidv4();
-    await db.addResponse({ id: responseId, image_id: req.params.imageId, type: 'user', audio_filename: audioUrl, user_id: req.userId });
+    await db.addResponse({
+      id: responseId, image_id: req.params.imageId, type: 'user',
+      audio_filename: audioUrl, user_id: req.userId, round_id: round?.id ?? null,
+    });
 
-    res.json({ id: responseId, type: 'user', audio_filename: audioUrl });
+    res.json({ id: responseId, type: 'user', audio_filename: audioUrl, round_id: round?.id ?? null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
