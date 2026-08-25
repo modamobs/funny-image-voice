@@ -139,6 +139,9 @@ export default function TodayRound({ isMobile, children }: Props) {
         style={{
           border: '3px solid var(--ink)', background: 'var(--stage)',
           overflow: 'hidden', position: 'relative', cursor: 'pointer',
+          // 짤을 무대 안쪽으로 들여놓는다 — 어떤 비율의 짤이 와도 조명이 항상 보이도록.
+          // 위쪽을 더 띄우는 건 조명이 위에서 떨어지기 때문.
+          padding: isMobile ? '22px 16px 16px' : '38px 30px 30px',
         }}
       >
         <div style={{
@@ -152,6 +155,10 @@ export default function TodayRound({ isMobile, children }: Props) {
           style={{
             display: 'block', width: '100%', aspectRatio: '16/10',
             objectFit: 'contain', position: 'relative',
+            background: '#0C0A11',
+            boxShadow: isMobile
+              ? '0 10px 24px rgba(0,0,0,0.55)'
+              : '0 18px 44px rgba(0,0,0,0.6)',
           }}
         />
       </div>
