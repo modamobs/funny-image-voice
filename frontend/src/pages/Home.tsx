@@ -274,7 +274,13 @@ export default function Home() {
                 src={IMAGE_URL(img.filename)}
                 alt={img.original_name}
                 loading="lazy"
-                style={{ width: '100%', display: 'block', borderBottom: '2.5px solid var(--ink)' }}
+                style={{
+                  width: '100%', display: 'block', borderBottom: '2.5px solid var(--ink)',
+                  // PC 는 4열 고정 그리드라 카드 높이를 맞춰야 한다.
+                  // 안 맞추면 그리드가 행 높이를 가장 큰 카드에 맞춰 늘려서
+                  // 짧은 짤 아래에 흰 여백이 크게 남는다. 모바일 매소너리는 자연 높이 그대로.
+                  ...(isMobile ? {} : { aspectRatio: '16/10', objectFit: 'cover' as const }),
+                }}
               />
               <div style={{ padding: '8px 11px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2.4" strokeLinecap="round">
