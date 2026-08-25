@@ -5,10 +5,14 @@ const OpenAI = require('openai');
 const db = require('../db');
 const { uploadToR2 } = require('../storage');
 const { requireAuth } = require('../middleware/auth');
+const { pickCharacter, systemPrompt, publicList, cleanLine } = require('../characters');
 
 const AI_DAILY_LIMIT = 5;
 
 const router = express.Router();
+
+// 멘트를 읽어줄 캐릭터 목록
+router.get('/ai-characters', (req, res) => res.json(publicList));
 
 let _openai = null;
 function getOpenAI() {
@@ -35,37 +39,33 @@ router.post('/images/:imageId/ai-response-preview', requireAuth, async (req, res
     const image = await db.getImage(req.params.imageId);
     if (!image) return res.status(404).json({ error: '이미지를 찾을 수 없습니다' });
 
+    // 캐릭터를 안 고르면 무작위. 같은 짤에 다른 캐릭터를 붙이는 재미가 핵심이라
+    // 문장을 쓰는 성격과 읽는 말투를 한 캐릭터에서 같이 가져온다.
+    const character = pickCharacter(req.body?.character);
     const openai = getOpenAI();
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        {
-          role: 'system',
-          content: `당신은 일본 예능 프로그램의 개그맨입니다. 이미지를 보고 즉흥적으로 웃긴 한국어 멘트를 한 문장으로 만들어주세요.
-- 말투는 자연스럽고 구어체로
-- 반전, 과장, 엉뚱함을 활용
-- 반드시 한 문장으로만 (30자 이내)
-- 멘트만 출력, 설명 없이`,
-        },
+        { role: 'system', content: systemPrompt(character) },
         {
           role: 'user',
           content: [
             { type: 'image_url', image_url: { url: image.filename } },
-            { type: 'text', text: '이 이미지에 웃긴 멘트를 달아주세요!' },
+            { type: 'text', text: '이 이미지에 멘트를 달아주세요!' },
           ],
         },
       ],
       max_tokens: 100,
     });
 
-    const funnyText = completion.choices[0].message.content.trim();
+    const funnyText = cleanLine(completion.choices[0].message.content);
 
     const ttsResponse = await openai.audio.speech.create({
-      model: 'tts-1',
-      voice: 'onyx',
+      model: 'gpt-4o-mini-tts',
+      voice: character.voice,
+      instructions: character.instructions,
       input: funnyText,
-      speed: 1.1,
     });
 
     await db.incrementAiUsage(req.userId);
@@ -74,7 +74,11 @@ router.post('/images/:imageId/ai-response-preview', requireAuth, async (req, res
     const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
     const audioUrl = await uploadToR2(audioKey, audioBuffer, 'audio/mpeg');
 
-    res.json({ audio_filename: audioUrl, ai_text: funnyText });
+    res.json({
+      audio_filename: audioUrl,
+      ai_text: funnyText,
+      character: { id: character.id, name: character.name },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'AI 응답 생성 실패: ' + err.message });
@@ -84,15 +88,16 @@ router.post('/images/:imageId/ai-response-preview', requireAuth, async (req, res
 // 2단계: 확인 후 DB 저장
 router.post('/images/:imageId/ai-response-confirm', requireAuth, async (req, res) => {
   try {
-    const { audio_filename, ai_text } = req.body;
+    const { audio_filename, ai_text, character } = req.body;
     if (!audio_filename) return res.status(400).json({ error: '잘못된 요청입니다' });
     const round = await db.getOpenRoundForImage(req.params.imageId);
     const responseId = uuidv4();
     await db.addResponse({
       id: responseId, image_id: req.params.imageId, type: 'ai',
       audio_filename, ai_text, user_id: req.userId, round_id: round?.id ?? null,
+      ai_character: character?.name ?? null,
     });
-    res.json({ id: responseId, type: 'ai', ai_text, audio_filename });
+    res.json({ id: responseId, type: 'ai', ai_text, audio_filename, character });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

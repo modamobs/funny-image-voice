@@ -94,6 +94,9 @@ async function init() {
       ON daily_rounds (status) WHERE status = 'open';
     CREATE INDEX IF NOT EXISTS daily_rounds_opens_at_idx ON daily_rounds (opens_at DESC);
 
+    -- AI 멘트를 읽은 캐릭터 이름. 유저 멘트는 NULL
+    ALTER TABLE responses ADD COLUMN IF NOT EXISTS ai_character TEXT;
+
     -- 멘트가 어느 라운드에 속하는지. 라운드 밖에서 달린 멘트는 NULL
     ALTER TABLE responses ADD COLUMN IF NOT EXISTS round_id TEXT REFERENCES daily_rounds(id) ON DELETE SET NULL;
     CREATE INDEX IF NOT EXISTS responses_round_idx ON responses (round_id);
@@ -103,7 +106,7 @@ async function init() {
 // 한 라운드에 달린 멘트를 전부 읽는다. 표시 순서는 득표순.
 async function loadEntries(roundId, userId) {
   const { rows } = await pool.query(
-    `SELECT r.id, r.type, r.audio_filename, r.ai_text, r.votes, r.created_at, r.user_id,
+    `SELECT r.id, r.type, r.audio_filename, r.ai_text, r.ai_character, r.votes, r.created_at, r.user_id,
             u.name AS nickname, u.picture,
             (rv.user_id IS NOT NULL) AS voted_by_me
      FROM responses r
@@ -183,10 +186,10 @@ const db = {
     );
   },
 
-  async addResponse({ id, image_id, type, audio_filename, ai_text, user_id, round_id }) {
+  async addResponse({ id, image_id, type, audio_filename, ai_text, user_id, round_id, ai_character }) {
     await pool.query(
-      'INSERT INTO responses (id, image_id, type, audio_filename, ai_text, user_id, round_id) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [id, image_id, type, audio_filename, ai_text ?? null, user_id ?? null, round_id ?? null]
+      'INSERT INTO responses (id, image_id, type, audio_filename, ai_text, user_id, round_id, ai_character) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [id, image_id, type, audio_filename, ai_text ?? null, user_id ?? null, round_id ?? null, ai_character ?? null]
     );
   },
 
