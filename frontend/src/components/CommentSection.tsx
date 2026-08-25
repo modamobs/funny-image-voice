@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Comment, Response } from '../types';
-import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, previewAiResponse, confirmAiResponse, AUDIO_URL } from '../api';
+import { getComments, postComment, updateComment, deleteComment, likeComment, uploadUserResponse, vote, deleteResponse, previewAiResponse, confirmAiResponse, getAiCharacters, AUDIO_URL } from '../api';
+
+interface AiCharacter { id: string; name: string }
 import { useAuth } from '../hooks/useAuth';
 
 
@@ -335,10 +337,12 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
   const listRef = useRef<HTMLDivElement>(null);
 
   const [inputMode, setInputMode] = useState<'text' | 'recording'>('text');
+  const [characters, setCharacters] = useState<AiCharacter[]>([]);
+  const [pickedChar, setPickedChar] = useState<string | null>(null);
   const [recordingSec, setRecordingSec] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiPreview, setAiPreview] = useState<{ audio_filename: string; ai_text: string } | null>(null);
+  const [aiPreview, setAiPreview] = useState<{ audio_filename: string; ai_text: string; character?: AiCharacter } | null>(null);
   const [aiConfirming, setAiConfirming] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -393,10 +397,13 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
     } catch { alert('마이크 권한이 필요합니다.'); }
   };
 
-  const handleAiResponse = async () => {
+  useEffect(() => { getAiCharacters().then(r => setCharacters(r.data)).catch(() => {}); }, []);
+
+  // 캐릭터를 안 고르면 서버가 무작위로 뽑는다 — 뭐가 나올지 모르는 게 재미의 일부라 기본값으로 뒀다
+  const handleAiResponse = async (charId?: string | null) => {
     setAiLoading(true);
     try {
-      const res = await previewAiResponse(imageId);
+      const res = await previewAiResponse(imageId, charId ?? pickedChar ?? undefined);
       setAiPreview(res.data);
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'AI 멘트 생성 실패';
@@ -410,7 +417,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
     if (!aiPreview) return;
     setAiConfirming(true);
     try {
-      await confirmAiResponse(imageId, aiPreview.audio_filename, aiPreview.ai_text);
+      await confirmAiResponse(imageId, aiPreview.audio_filename, aiPreview.ai_text, aiPreview.character);
       setAiPreview(null);
       onResponseAdded?.();
     } finally {
@@ -525,12 +532,32 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
                     </button>
                   </div>
                 </div>
-                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button type="button" onClick={handleAiResponse} disabled={aiLoading}
-                    style={{ padding: '6px 14px', borderRadius: '16px', border: 'none', background: aiLoading ? '#d1d5db' : '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: aiLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {aiLoading ? '⏳ AI 생각 중...' : '🤖 AI 멘트'}
-                  </button>
-                  <span style={{ fontSize: '11px', color: '#9ca3af' }}>오늘 {user.ai_usage_today}/5회</span>
+                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                  {characters.length > 0 && (
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                      <button type="button" onClick={() => setPickedChar(null)}
+                        style={{
+                          padding: '4px 10px', border: '1.5px solid var(--ink)', cursor: 'pointer',
+                          background: pickedChar === null ? 'var(--amber)' : 'var(--panel)',
+                          color: 'var(--ink)', fontSize: '11.5px', fontWeight: 700, fontFamily: 'inherit',
+                        }}>랜덤</button>
+                      {characters.map(c => (
+                        <button key={c.id} type="button" onClick={() => setPickedChar(c.id)}
+                          style={{
+                            padding: '4px 10px', border: '1.5px solid var(--ink)', cursor: 'pointer',
+                            background: pickedChar === c.id ? 'var(--amber)' : 'var(--panel)',
+                            color: 'var(--ink)', fontSize: '11.5px', fontWeight: 700, fontFamily: 'inherit',
+                          }}>{c.name}</button>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                    <button type="button" onClick={() => handleAiResponse()} disabled={aiLoading}
+                      style={{ padding: '7px 16px', border: '2px solid var(--ink)', background: aiLoading ? '#D6D0C6' : 'var(--amber)', color: 'var(--ink)', fontSize: '12.5px', fontWeight: 700, fontFamily: 'inherit', cursor: aiLoading ? 'not-allowed' : 'pointer' }}>
+                      {aiLoading ? 'AI 생각 중...' : 'AI에게 시키기'}
+                    </button>
+                    <span style={{ fontSize: '11px', color: 'var(--muted)' }}>오늘 {user.ai_usage_today}/5회</span>
+                  </div>
                 </div>
               </form>
             )}
@@ -542,15 +569,17 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
       {aiPreview && (
         <div onClick={() => !aiConfirming && setAiPreview(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '380px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#6366f1' }}>🤖 AI 멘트 미리보기</p>
-            <p style={{ margin: 0, fontSize: '16px', color: '#111827', lineHeight: 1.6, fontStyle: 'italic', textAlign: 'center' }}>"{aiPreview.ai_text}"</p>
+            <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--muted)' }}>
+              {aiPreview.character?.name ?? 'AI'} 가 읽습니다
+            </p>
+            <p style={{ margin: 0, fontSize: '17px', color: 'var(--ink)', lineHeight: 1.6, textAlign: 'center', fontWeight: 600 }}>{aiPreview.ai_text}</p>
             <audio controls src={AUDIO_URL(aiPreview.audio_filename)} style={{ width: '100%', height: '36px' }} />
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={handleAiConfirm} disabled={aiConfirming || aiLoading}
                 style={{ flex: 1, padding: '11px', borderRadius: '12px', border: 'none', background: aiConfirming || aiLoading ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: aiConfirming || aiLoading ? 'not-allowed' : 'pointer' }}>
                 {aiConfirming ? '올리는 중...' : '✅ 올리기'}
               </button>
-              <button onClick={handleAiResponse} disabled={aiLoading || aiConfirming}
+              <button onClick={() => handleAiResponse()} disabled={aiLoading || aiConfirming}
                 style={{ flex: 1, padding: '11px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: aiLoading || aiConfirming ? '#f3f4f6' : '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: aiLoading || aiConfirming ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                 {aiLoading ? '⏳ 생성 중...' : '🔄 다시 생성'}
               </button>

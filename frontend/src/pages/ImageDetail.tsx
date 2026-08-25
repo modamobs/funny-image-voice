@@ -128,41 +128,42 @@ export default function ImageDetail() {
   /* ══════════════ 모바일 레이아웃 ══════════════ */
   if (isMobile) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f9fafb' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--paper)', color: 'var(--ink)', fontFamily: 'var(--body)' }}>
         {DeleteModal}
         {/* 상단 바 */}
-        <div style={{ background: '#4338ca', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ background: 'var(--paper)', borderBottom: '3px solid var(--ink)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 }}>
           <button
             onClick={() => navigate('/')}
-            style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontSize: '13px' }}
+            style={{ height: 40, padding: '0 12px', border: '2px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)', cursor: 'pointer', fontSize: '12.5px', fontWeight: 700, fontFamily: 'inherit' }}
           >
             ← 목록
           </button>
           {currentIndex >= 0 && (
-            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
+            <span style={{ color: 'var(--muted)', fontSize: '12.5px', fontVariantNumeric: 'tabular-nums' }}>
               {currentIndex + 1} / {imageList.length}
             </span>
           )}
           {user && data.user_id === user.id && (
             <button
               onClick={() => setConfirmDelete(true)}
-              style={{ marginLeft: 'auto', background: 'rgba(239,68,68,0.8)', border: 'none', borderRadius: '8px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
+              style={{ marginLeft: 'auto', height: 40, padding: '0 12px', border: '2px solid #C9302B', background: 'var(--panel)', color: '#C9302B', cursor: 'pointer', fontSize: '12.5px', fontWeight: 700, fontFamily: 'inherit' }}
             >
-              🗑 삭제
+              삭제
             </button>
           )}
         </div>
 
         {/* 메인 이미지 (스와이프 가능) */}
         <div
-          style={{ background: '#fff', flexShrink: 0 }}
+          style={{ background: 'var(--stage)', flexShrink: 0, position: 'relative', overflow: 'hidden', padding: '20px 16px 16px', borderBottom: '3px solid var(--ink)' }}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
+          <div style={{ position: 'absolute', top: '-110px', left: '50%', transform: 'translateX(-50%)', width: '760px', height: '420px', pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% 0%, rgba(232,144,28,0.32) 0%, rgba(232,144,28,0.07) 46%, rgba(232,144,28,0) 72%)' }} />
           <img
             src={IMAGE_URL(data.filename)}
             alt={data.original_name}
-            style={{ width: '100%', maxHeight: '55vw', objectFit: 'contain', display: 'block' }}
+            style={{ width: '100%', maxHeight: '58vw', objectFit: 'contain', display: 'block', position: 'relative', boxShadow: '0 10px 24px rgba(0,0,0,0.55)' }}
           />
         </div>
 
@@ -170,7 +171,7 @@ export default function ImageDetail() {
         {ThumbnailStrip}
 
         {/* 구분선 */}
-        <div style={{ height: '1px', background: '#e5e7eb', flexShrink: 0 }} />
+        <div style={{ height: '1px', background: 'var(--hairline)', flexShrink: 0 }} />
 
         {/* 댓글 + 멘트 피드 (자연스럽게 스크롤) */}
         {id && (
@@ -189,7 +190,7 @@ export default function ImageDetail() {
   const relatedImages = imageList.filter(img => img.id !== id);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--paper)', color: 'var(--ink)', fontFamily: 'var(--body)' }}>
       {DeleteModal}
 
       {/* 상단 플로팅 바 */}
@@ -197,34 +198,35 @@ export default function ImageDetail() {
         <button
           onClick={() => navigate('/')}
           title="목록으로"
-          style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: '#f3f4f6', color: '#111827', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}
+          style={{ width: 44, height: 44, border: '2.5px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}
         >
           ←
         </button>
         {user && data.user_id === user.id && (
           <button
             onClick={() => setConfirmDelete(true)}
-            style={{ marginLeft: 'auto', padding: '10px 18px', borderRadius: '24px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+            style={{ marginLeft: 'auto', height: 44, padding: '0 18px', border: '2.5px solid #C9302B', background: 'var(--panel)', color: '#C9302B', fontSize: '13px', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}
           >
-            🗑 삭제
+            삭제
           </button>
         )}
       </div>
 
       {/* 중앙 카드: 이미지 + 댓글 패널 */}
       <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 20px 8px' }}>
-        <div style={{ display: 'flex', width: '100%', maxWidth: '1020px', height: '76vh', minHeight: '480px', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.16)', border: '1px solid #f3f4f6', background: '#fff' }}>
-          {/* 왼쪽: 이미지 */}
-          <div style={{ flex: 1, minWidth: 0, background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', width: '100%', maxWidth: '1020px', height: '76vh', minHeight: '480px', overflow: 'hidden', border: '3px solid var(--ink)', boxShadow: '6px 6px 0 var(--ink)', background: 'var(--panel)' }}>
+          {/* 왼쪽: 무대 위의 짤 */}
+          <div style={{ flex: 1, minWidth: 0, background: 'var(--stage)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '34px 30px 30px' }}>
+            <div style={{ position: 'absolute', top: '-110px', left: '50%', transform: 'translateX(-50%)', width: '760px', height: '420px', pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% 0%, rgba(232,144,28,0.32) 0%, rgba(232,144,28,0.07) 46%, rgba(232,144,28,0) 72%)' }} />
             <img
               src={IMAGE_URL(data.filename)}
               alt={data.original_name}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', position: 'relative', boxShadow: '0 18px 44px rgba(0,0,0,0.6)' }}
             />
           </div>
 
           {/* 오른쪽: 댓글 패널 */}
-          <div style={{ width: 'clamp(320px, 38%, 440px)', flexShrink: 0, borderLeft: '1px solid #f3f4f6', background: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ width: 'clamp(320px, 38%, 440px)', flexShrink: 0, borderLeft: '3px solid var(--ink)', background: 'var(--panel)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {id && (
               <CommentSection
                 imageId={id}

@@ -12,10 +12,13 @@ export const uploadImage = (file: File) => {
 };
 export const generateAiResponse = (imageId: string) =>
   api.post(`/images/${imageId}/ai-response`);
-export const previewAiResponse = (imageId: string) =>
-  api.post(`/images/${imageId}/ai-response-preview`);
-export const confirmAiResponse = (imageId: string, audio_filename: string, ai_text: string) =>
-  api.post(`/images/${imageId}/ai-response-confirm`, { audio_filename, ai_text });
+export const getAiCharacters = () => api.get('/ai-characters');
+export const previewAiResponse = (imageId: string, character?: string) =>
+  api.post(`/images/${imageId}/ai-response-preview`, { character });
+export const confirmAiResponse = (
+  imageId: string, audio_filename: string, ai_text: string,
+  character?: { id: string; name: string },
+) => api.post(`/images/${imageId}/ai-response-confirm`, { audio_filename, ai_text, character });
 export const previewAiImage = () => api.post('/images/ai-preview');
 export const confirmAiImage = (filename: string, prompt: string) =>
   api.post('/images/ai-confirm', { filename, prompt });
