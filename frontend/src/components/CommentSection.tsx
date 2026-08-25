@@ -6,8 +6,10 @@ interface AiCharacter { id: string; name: string }
 import { useAuth } from '../hooks/useAuth';
 
 
-// 닉네임으로 아바타 배경색 결정
-const AVATAR_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#0ea5e9', '#f97316'];
+// 닉네임으로 아바타 배경색 결정.
+// 지면이 밝고 앰버 하나로 강조를 몰아주는 화면이라 아바타는 채도를 눌러
+// 서로 구분만 되게 한다. 원색을 쓰면 아바타가 화면의 주인공이 돼버린다.
+const AVATAR_COLORS = ['#C9720C', '#B03A34', '#3F7A63', '#3B6C9E', '#7A5390', '#8A6A2F', '#4E555F'];
 function avatarColor(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
@@ -16,7 +18,7 @@ function avatarColor(name: string) {
 
 function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: avatarColor(name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 700, flexShrink: 0 }}>
+    <div style={{ width: size, height: size, border: '2px solid var(--ink)', background: avatarColor(name), color: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.42, fontWeight: 700, flexShrink: 0, fontFamily: 'var(--body)' }}>
       {name[0]?.toUpperCase() ?? '?'}
     </div>
   );
@@ -24,9 +26,32 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 
 function TimeLabel({ iso }: { iso: string }) {
   return (
-    <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+    <span style={{ fontSize: '11.5px', color: 'var(--faint)' }}>
       {new Date(iso).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
     </span>
+  );
+}
+
+function ThumbIcon({ filled = false }: { filled?: boolean }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor" strokeWidth="2" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M7 10v10H3V10zM7 10l4.6-6.4A2.4 2.4 0 0 1 15.8 6l-.9 3.2h5a2 2 0 0 1 2 2.5l-1.5 6.4a2 2 0 0 1-2 1.6H7z" />
+    </svg>
+  );
+}
+
+// 예전에 저장된 AI 멘트에는 따옴표가 붙어 있다. 새 멘트는 서버가 떼고 저장하지만
+// 이미 쌓인 기록은 그대로라, 화면에 올릴 때 한 번 더 턴다.
+const stripQuotes = (t: string) => t.replace(/["'“”‘’]/g, '').trim();
+
+function MicIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </svg>
   );
 }
 
@@ -48,17 +73,17 @@ function ThreeDotMenu({ items }: { items: { label: string; danger?: boolean; onC
     <div ref={ref} style={{ position: 'relative', marginLeft: 'auto' }}>
       <button
         onClick={() => setOpen(p => !p)}
-        style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1, borderRadius: '4px' }}
+        style={{ background: 'none', border: 'none', color: 'var(--faint)', fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
       >
         ⋮
       </button>
       {open && (
-        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', background: '#fff', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', minWidth: '90px', zIndex: 100, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', background: 'var(--panel)', border: '2px solid var(--ink)', boxShadow: '3px 3px 0 var(--ink)', minWidth: '92px', zIndex: 100, overflow: 'hidden' }}>
           {items.map(item => (
             <button
               key={item.label}
               onClick={() => { item.onClick(); setOpen(false); }}
-              style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: item.danger ? '#ef4444' : '#374151', cursor: 'pointer' }}
+              style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '13px', fontWeight: 700, fontFamily: 'inherit', color: item.danger ? '#C9302B' : 'var(--ink)', cursor: 'pointer' }}
             >
               {item.label}
             </button>
@@ -73,11 +98,11 @@ function ThreeDotMenu({ items }: { items: { label: string; danger?: boolean; onC
 function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
   return (
     <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', padding: '28px 28px 20px', width: '300px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <p style={{ margin: 0, fontSize: '15px', color: '#111827', textAlign: 'center', lineHeight: 1.6 }}>{message}</p>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--panel)', border: '3px solid var(--ink)', boxShadow: '6px 6px 0 var(--ink)', padding: '26px 26px 20px', width: '300px', fontFamily: 'var(--body)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <p style={{ margin: 0, fontSize: '15px', color: 'var(--ink)', textAlign: 'center', lineHeight: 1.6, fontWeight: 600 }}>{message}</p>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={onCancel} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>취소</button>
-          <button onClick={onConfirm} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>삭제</button>
+          <button onClick={onCancel} style={{ flex: 1, padding: '10px', border: '2px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)', fontSize: '13.5px', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>취소</button>
+          <button onClick={onConfirm} style={{ flex: 1, padding: '10px', border: '2px solid var(--ink)', background: '#C9302B', color: 'var(--paper)', fontSize: '13.5px', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>삭제</button>
         </div>
       </div>
     </div>
@@ -86,12 +111,13 @@ function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onCon
 
 // 액션 버튼 공통 스타일
 const actionBtn = (active = false): React.CSSProperties => ({
-  display: 'flex', alignItems: 'center', gap: '4px',
-  padding: '4px 8px', borderRadius: '20px', border: 'none',
-  background: 'transparent', cursor: 'pointer',
-  fontSize: '13px', fontWeight: 600,
-  color: active ? '#b45309' : '#9ca3af',
-  transition: 'color 0.15s',
+  display: 'flex', alignItems: 'center', gap: '5px',
+  padding: '6px 10px', cursor: 'pointer',
+  border: `1.5px solid ${active ? 'var(--amber-deep)' : 'var(--hairline)'}`,
+  background: active ? 'var(--amber-tint)' : 'transparent',
+  fontSize: '12px', fontWeight: 700, fontFamily: 'inherit',
+  color: active ? 'var(--amber-deep)' : 'var(--muted)',
+  transition: 'color 0.15s, border-color 0.15s, background 0.15s',
 });
 
 interface CommentItemProps {
@@ -165,18 +191,18 @@ function CommentItem({ comment, myId, onChanged, replies = [], onReply, isReply 
   const avatarSize = isReply ? 28 : 36;
 
   return (
-    <div style={{ display: 'flex', gap: '10px', padding: isReply ? '8px 0' : '12px 0', borderBottom: isReply ? 'none' : '1px solid #f3f4f6' }}>
+    <div style={{ display: 'flex', gap: '10px', padding: isReply ? '9px 0' : '13px 0', borderBottom: isReply ? 'none' : '1px solid var(--hairline)' }}>
       <Avatar name={comment.nickname || '?'} size={avatarSize} />
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* 헤더 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
-          <span style={{ fontWeight: 700, fontSize: isReply ? '12px' : '13px', color: '#111827' }}>{comment.nickname}</span>
+          <span style={{ fontWeight: 700, fontSize: isReply ? '12px' : '13px', color: 'var(--ink)' }}>{comment.nickname}</span>
           {comment.country_code && (
             <img
               src={`https://flagcdn.com/w20/${comment.country_code.toLowerCase()}.png`}
               alt={comment.country_code}
               title={comment.country_code}
-              style={{ width: 16, height: 12, objectFit: 'cover', borderRadius: 2, verticalAlign: 'middle', flexShrink: 0 }}
+              style={{ width: 16, height: 12, objectFit: 'cover', border: '1px solid var(--hairline)', verticalAlign: 'middle', flexShrink: 0 }}
             />
           )}
           <TimeLabel iso={comment.created_at} />
@@ -192,22 +218,22 @@ function CommentItem({ comment, myId, onChanged, replies = [], onReply, isReply 
         {editing ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <textarea ref={textareaRef} value={editText} onChange={e => setEditText(e.target.value)} rows={3}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #6366f1', fontSize: '14px', resize: 'vertical', outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }} />
+              style={{ padding: '9px 12px', border: '2px solid var(--ink)', fontSize: '14px', resize: 'vertical', outline: 'none', fontFamily: 'inherit', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setEditing(false)} style={{ padding: '6px 14px', borderRadius: '16px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', fontSize: '13px', cursor: 'pointer' }}>취소</button>
-              <button onClick={handleSave} disabled={saving || !editText.trim()} style={{ padding: '6px 14px', borderRadius: '16px', border: 'none', background: saving || !editText.trim() ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: saving || !editText.trim() ? 'not-allowed' : 'pointer' }}>
+              <button onClick={() => setEditing(false)} style={{ padding: '6px 14px', border: '1.5px solid var(--hairline)', background: 'var(--panel)', color: 'var(--muted)', fontSize: '12.5px', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>취소</button>
+              <button onClick={handleSave} disabled={saving || !editText.trim()} style={{ padding: '6px 14px', border: '2px solid var(--ink)', background: saving || !editText.trim() ? '#D6D0C6' : 'var(--amber)', color: 'var(--ink)', fontSize: '12.5px', fontWeight: 700, fontFamily: 'inherit', cursor: saving || !editText.trim() ? 'not-allowed' : 'pointer' }}>
                 {saving ? '저장 중...' : '저장'}
               </button>
             </div>
           </div>
         ) : (
           <>
-            <p style={{ margin: '0 0 6px', fontSize: isReply ? '13px' : '14px', color: '#1f2937', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{comment.text}</p>
+            <p style={{ margin: '0 0 8px', fontSize: isReply ? '13px' : '14px', color: '#3A342D', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{comment.text}</p>
             {/* 액션 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <button onClick={handleLike} disabled={!canLike} title={myId === null ? '로그인 후 좋아요 가능' : isOwner ? '내 댓글에는 좋아요 불가' : ''}
                 style={{ ...actionBtn(likedByMe), cursor: canLike ? 'pointer' : 'default' }}>
-                👍 {likes > 0 ? likes : ''}
+                <ThumbIcon filled={likedByMe} />{likes > 0 ? likes : ''}
               </button>
               {!isReply && (
                 <button onClick={handleReplyToggle} style={{ ...actionBtn(showReplyForm), cursor: myId ? 'pointer' : 'default' }}>답글</button>
@@ -224,15 +250,15 @@ function CommentItem({ comment, myId, onChanged, replies = [], onReply, isReply 
                   rows={2}
                   placeholder="답글 추가..."
                   onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleReplySubmit(); }}
-                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5, width: '100%', boxSizing: 'border-box' }}
+                  style={{ padding: '9px 12px', border: '2px solid var(--hairline)', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', color: 'var(--ink)', lineHeight: 1.5, width: '100%', boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                   <button onClick={() => { setShowReplyForm(false); setReplyText(''); }}
-                    style={{ padding: '6px 12px', borderRadius: '16px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ padding: '6px 12px', border: '1.5px solid var(--hairline)', background: 'var(--panel)', color: 'var(--muted)', fontSize: '12px', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>
                     취소
                   </button>
                   <button onClick={handleReplySubmit} disabled={!replyText.trim() || submittingReply}
-                    style={{ padding: '6px 12px', borderRadius: '16px', border: 'none', background: !replyText.trim() || submittingReply ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: !replyText.trim() || submittingReply ? 'not-allowed' : 'pointer' }}>
+                    style={{ padding: '6px 12px', border: '2px solid var(--ink)', background: !replyText.trim() || submittingReply ? '#D6D0C6' : 'var(--amber)', color: 'var(--ink)', fontSize: '12px', fontWeight: 700, fontFamily: 'inherit', cursor: !replyText.trim() || submittingReply ? 'not-allowed' : 'pointer' }}>
                     {submittingReply ? '...' : '답글'}
                   </button>
                 </div>
@@ -243,11 +269,11 @@ function CommentItem({ comment, myId, onChanged, replies = [], onReply, isReply 
             {!isReply && replies.length > 0 && (
               <div style={{ marginTop: '4px' }}>
                 <button onClick={() => setShowReplies(p => !p)}
-                  style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  style={{ background: 'none', border: 'none', color: 'var(--amber-deep)', fontSize: '12px', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   {showReplies ? `▲ 답글 ${replies.length}개 숨기기` : `▼ 답글 ${replies.length}개`}
                 </button>
                 {showReplies && (
-                  <div style={{ marginTop: '4px', paddingLeft: '8px', borderLeft: '2px solid #e5e7eb' }}>
+                  <div style={{ marginTop: '4px', paddingLeft: '10px', borderLeft: '2px solid var(--hairline)' }}>
                     {replies.map(reply => (
                       <CommentItem
                         key={reply.id}
@@ -287,15 +313,15 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
   const handleDelete = async () => { await deleteResponse(response.id); setConfirmDelete(false); onDeleted(); };
 
   return (
-    <div style={{ display: 'flex', gap: '10px', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
+    <div style={{ display: 'flex', gap: '10px', padding: '13px 0', borderBottom: '1px solid var(--hairline)' }}>
       {/* 아바타 */}
       <Avatar name={displayName} />
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* 헤더 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
-          <span style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>{displayName}</span>
+          <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ink)' }}>{displayName}</span>
           {isAi && (
-            <span style={{ fontSize: '10px', fontWeight: 700, color: '#6366f1', background: '#ede9fe', borderRadius: '6px', padding: '1px 6px', lineHeight: 1.6 }}>🤖 AI</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--amber-deep)', background: 'var(--amber-tint)', border: '1.5px solid var(--amber-deep)', padding: '1px 6px', lineHeight: 1.6 }}>AI</span>
           )}
           <TimeLabel iso={response.created_at} />
           {isOwner && (
@@ -306,14 +332,14 @@ function VoiceItem({ response, myId, onDeleted }: { response: Response; myId: st
         </div>
         {/* AI 멘트 텍스트 */}
         {response.ai_text && (
-          <p style={{ margin: '0 0 8px', fontStyle: 'italic', color: '#374151', fontSize: '13px', lineHeight: 1.5 }}>"{response.ai_text}"</p>
+          <p style={{ margin: '0 0 8px', color: '#3A342D', fontSize: '13.5px', fontWeight: 600, lineHeight: 1.55 }}>{stripQuotes(response.ai_text)}</p>
         )}
         {/* 오디오 */}
         <audio controls src={AUDIO_URL(response.audio_filename)} style={{ width: '100%', height: '32px', marginBottom: '6px' }} />
         {/* 액션 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <button onClick={handleVote} disabled={voted} style={{ ...actionBtn(voted), cursor: voted ? 'default' : 'pointer' }}>
-            👍 {votes > 0 ? votes : ''}
+            <ThumbIcon filled={voted} />{votes > 0 ? votes : ''}
           </button>
         </div>
       </div>
@@ -436,15 +462,16 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
 
   return (
     <div style={mobile
-      ? { display: 'flex', flexDirection: 'column', background: '#fff' }
-      : { height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }
+      ? { display: 'flex', flexDirection: 'column', background: 'var(--panel)', color: 'var(--ink)', fontFamily: 'var(--body)' }
+      : { height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--panel)', color: 'var(--ink)', fontFamily: 'var(--body)' }
     }>
 
       {/* 헤더 */}
-      <div style={{ padding: '16px 20px 12px', flexShrink: 0, borderBottom: '1px solid #f3f4f6' }}>
-        <h3 style={{ margin: 0, color: '#111827', fontSize: '16px', fontWeight: 700 }}>
-          반응 <span style={{ color: '#6366f1' }}>{responses.length + comments.length}</span>
-        </h3>
+      <div style={{ padding: '14px 20px 11px', flexShrink: 0, borderBottom: '2px solid var(--ink)', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+        <h3 style={{ margin: 0, color: 'var(--ink)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.14em' }}>반응</h3>
+        <span style={{ fontFamily: 'var(--display)', fontSize: '20px', color: 'var(--amber-deep)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+          {responses.length + comments.length}
+        </span>
       </div>
 
       {/* 통합 피드 */}
@@ -453,7 +480,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
         : { flex: 1, overflowY: 'auto', padding: '0 16px', minHeight: 0 }
       }>
         {responses.length === 0 && comments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>첫 번째 반응을 남겨보세요!</div>
+          <div style={{ textAlign: 'center', padding: '44px 0', color: 'var(--faint)', fontSize: '13.5px' }}>첫 번째 반응을 남겨보세요!</div>
         ) : (() => {
           const all = [
             ...responses.map(r => ({ kind: 'response' as const, ts: new Date(r.created_at).getTime(), score: r.votes, data: r })),
@@ -471,17 +498,17 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
             <>
               {top && (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 0 4px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#b45309' }}>🏆 인기 반응</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '13px 0 5px' }}>
+                    <span style={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--amber-deep)' }}>인기 반응</span>
                   </div>
-                  <div style={{ borderLeft: '3px solid #f59e0b', paddingLeft: '10px', background: '#fffbeb', borderRadius: '0 8px 8px 0' }}>
+                  <div style={{ borderLeft: '4px solid var(--amber)', paddingLeft: '11px', background: 'var(--amber-tint)' }}>
                     {renderItem(top)}
                   </div>
                   {rest.length > 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0 0' }}>
-                      <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
-                      <span style={{ fontSize: '11px', color: '#9ca3af' }}>최신순</span>
-                      <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+                      <div style={{ flex: 1, height: '1px', background: 'var(--hairline)' }} />
+                      <span style={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--faint)' }}>최신순</span>
+                      <div style={{ flex: 1, height: '1px', background: 'var(--hairline)' }} />
                     </div>
                   )}
                 </>
@@ -493,28 +520,28 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
       </div>
 
       {/* 입력창 (하단 고정) */}
-      <div style={{ flexShrink: 0, borderTop: '1px solid #e5e7eb', padding: '12px 16px', background: '#fff' }}>
+      <div style={{ flexShrink: 0, borderTop: '2px solid var(--ink)', padding: '12px 16px', background: 'var(--paper)' }}>
         {!user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ flex: 1, fontSize: '13px', color: '#9ca3af' }}>댓글은 로그인 후 작성할 수 있습니다</span>
-            <button onClick={login} style={{ padding: '7px 14px', borderRadius: '20px', border: 'none', background: '#4338ca', color: '#fff', fontWeight: 700, fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
+            <span style={{ flex: 1, fontSize: '12.5px', color: 'var(--muted)' }}>댓글은 로그인 후 작성할 수 있습니다</span>
+            <button onClick={login} style={{ padding: '8px 14px', border: '2px solid var(--ink)', background: 'var(--amber)', color: 'var(--ink)', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
               <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 12, height: 12 }} />로그인
             </button>
           </div>
         ) : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <img src={user.picture} alt={user.name} style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0 }} />
-              <span style={{ fontWeight: 700, color: '#4338ca', fontSize: '13px' }}>{user.name}</span>
+              <img src={user.picture} alt={user.name} style={{ width: 26, height: 26, border: '2px solid var(--ink)', flexShrink: 0 }} />
+              <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '13px' }}>{user.name}</span>
             </div>
             {inputMode === 'recording' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #fca5a5', background: '#fff7f7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', padding: '11px 14px', border: '2px solid #C9302B', background: '#FDF3F2' }}>
                 <span className="rec-dot" />
-                <span style={{ flex: 1, fontSize: '14px', fontWeight: 600, color: '#ef4444' }}>{uploading ? '업로드 중...' : `녹음 중  ${fmt(recordingSec)}`}</span>
+                <span style={{ flex: 1, fontSize: '13.5px', fontWeight: 700, color: '#C9302B', fontVariantNumeric: 'tabular-nums' }}>{uploading ? '업로드 중...' : `녹음 중  ${fmt(recordingSec)}`}</span>
                 {!uploading && (
                   <>
-                    <button onClick={stopRecording} style={{ padding: '6px 12px', borderRadius: '16px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>■ 중지</button>
-                    <button onClick={cancelRecording} style={{ padding: '6px 10px', borderRadius: '16px', border: '1px solid #e5e7eb', background: '#f9fafb', color: '#6b7280', fontSize: '12px', cursor: 'pointer' }}>✕</button>
+                    <button onClick={stopRecording} style={{ padding: '6px 13px', border: '2px solid var(--ink)', background: '#C9302B', color: 'var(--paper)', fontSize: '12px', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>중지</button>
+                    <button onClick={cancelRecording} style={{ padding: '6px 10px', border: '1.5px solid var(--hairline)', background: 'var(--panel)', color: 'var(--muted)', fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer' }}>✕</button>
                   </>
                 )}
               </div>
@@ -522,12 +549,12 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
               <form onSubmit={handleSubmit}>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
                   <textarea placeholder="댓글 추가..." value={text} onChange={e => setText(e.target.value)} rows={2}
-                    style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                    style={{ flex: 1, padding: '9px 12px', border: '2px solid var(--hairline)', background: 'var(--panel)', color: 'var(--ink)', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5 }} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
                     <button type="button" onClick={startRecording} title="음성으로 멘트 남기기"
-                      style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid #e5e7eb', background: '#f9fafb', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🎤</button>
+                      style={{ width: '38px', height: '38px', border: '2px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MicIcon /></button>
                     <button type="submit" disabled={submitting || !text.trim()}
-                      style={{ padding: '6px 12px', borderRadius: '16px', border: 'none', background: submitting || !text.trim() ? '#d1d5db' : '#6366f1', color: '#fff', fontWeight: 700, fontSize: '12px', cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer' }}>
+                      style={{ padding: '7px 12px', border: '2px solid var(--ink)', background: submitting || !text.trim() ? '#D6D0C6' : 'var(--amber)', color: 'var(--ink)', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit', cursor: submitting || !text.trim() ? 'not-allowed' : 'pointer' }}>
                       {submitting ? '...' : '등록'}
                     </button>
                   </div>
@@ -568,7 +595,7 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
       {/* AI 멘트 미리보기 모달 */}
       {aiPreview && (
         <div onClick={() => !aiConfirming && setAiPreview(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '380px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--panel)', border: '3px solid var(--ink)', boxShadow: '6px 6px 0 var(--ink)', padding: '24px', width: '100%', maxWidth: '380px', fontFamily: 'var(--body)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--muted)' }}>
               {aiPreview.character?.name ?? 'AI'} 가 읽습니다
             </p>
@@ -576,16 +603,16 @@ export default function CommentSection({ imageId, responses, onResponseAdded, mo
             <audio controls src={AUDIO_URL(aiPreview.audio_filename)} style={{ width: '100%', height: '36px' }} />
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={handleAiConfirm} disabled={aiConfirming || aiLoading}
-                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: 'none', background: aiConfirming || aiLoading ? '#d1d5db' : '#6366f1', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: aiConfirming || aiLoading ? 'not-allowed' : 'pointer' }}>
-                {aiConfirming ? '올리는 중...' : '✅ 올리기'}
+                style={{ flex: 1, padding: '11px', border: '2px solid var(--ink)', background: aiConfirming || aiLoading ? '#D6D0C6' : 'var(--amber)', color: 'var(--ink)', fontSize: '13.5px', fontWeight: 700, fontFamily: 'inherit', cursor: aiConfirming || aiLoading ? 'not-allowed' : 'pointer' }}>
+                {aiConfirming ? '올리는 중...' : '올리기'}
               </button>
               <button onClick={() => handleAiResponse()} disabled={aiLoading || aiConfirming}
-                style={{ flex: 1, padding: '11px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: aiLoading || aiConfirming ? '#f3f4f6' : '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: aiLoading || aiConfirming ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                {aiLoading ? '⏳ 생성 중...' : '🔄 다시 생성'}
+                style={{ flex: 1, padding: '11px', border: '2px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)', fontSize: '13.5px', fontWeight: 700, fontFamily: 'inherit', cursor: aiLoading || aiConfirming ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                {aiLoading ? '생성 중...' : '다시 생성'}
               </button>
             </div>
             <button onClick={() => setAiPreview(null)} disabled={aiConfirming}
-              style={{ padding: '8px', borderRadius: '10px', border: 'none', background: 'none', color: '#9ca3af', fontSize: '13px', cursor: 'pointer', alignSelf: 'center' }}>
+              style={{ padding: '8px', border: 'none', background: 'none', color: 'var(--muted)', fontSize: '12.5px', fontFamily: 'inherit', cursor: 'pointer', alignSelf: 'center' }}>
               취소
             </button>
           </div>
