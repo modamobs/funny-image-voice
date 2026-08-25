@@ -260,7 +260,65 @@ export default function TodayRound({ isMobile, children }: Props) {
           border: '2.5px dashed var(--hairline)', padding: '20px',
           textAlign: 'center', fontSize: '13px', color: 'var(--faint)',
         }}>
-          {isOpen ? '아직 아무도 멘트를 안 달았어요. 1등 하기 좋은 타이밍!' : '이 라운드엔 참여한 멘트가 없었어요.'}
+          {isOpen
+            ? (round.ai_entries.length > 0
+                ? '아직 목소리 멘트가 없어요. 1등 하기 좋은 타이밍!'
+                : '아직 아무도 멘트를 안 달았어요. 1등 하기 좋은 타이밍!')
+            : '이 라운드엔 참여한 멘트가 없었어요.'}
+        </div>
+      )}
+
+      {round.ai_entries.length > 0 && (
+        <div style={{ marginTop: isMobile ? '10px' : '12px' }}>
+          <div style={{
+            fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.1em',
+            color: 'var(--muted)', marginBottom: '6px',
+          }}>
+            AI 멘트 · 순위에는 들어가지 않아요
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {round.ai_entries.map((entry) => {
+              const playing = playingId === entry.id;
+              return (
+                <div
+                  key={entry.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: isMobile ? '11px' : '12px',
+                    border: '2px dashed var(--hairline)', background: 'transparent',
+                    padding: isMobile ? '6px 11px' : '7px 13px',
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <rect x="4" y="8" width="16" height="12" rx="2" />
+                    <path d="M12 8V4" />
+                    <circle cx="9" cy="14" r="1" />
+                    <circle cx="15" cy="14" r="1" />
+                  </svg>
+                  <button
+                    onClick={() => togglePlay(entry)}
+                    aria-label={`AI 멘트 ${playing ? '정지' : '듣기'}`}
+                    style={{
+                      width: 44, height: 44, flexShrink: 0, padding: 0, cursor: 'pointer',
+                      border: '2px solid var(--hairline)',
+                      background: playing ? '#C9302B' : 'var(--panel)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill={playing ? '#FAF8F3' : 'var(--muted)'}>
+                      <path d={playing ? 'M7 7h10v10H7z' : 'M8 5v14l11-7z'} />
+                    </svg>
+                  </button>
+                  <span style={{
+                    flex: 1, minWidth: 0, fontSize: isMobile ? '13px' : '13.5px',
+                    color: 'var(--ink-soft, #4A4540)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {entry.ai_text ?? 'AI가 만든 멘트'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
