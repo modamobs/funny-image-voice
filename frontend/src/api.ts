@@ -54,6 +54,12 @@ export const adminGetUsers = () => api.get('/admin/users');
 export const adminGetComments = () => api.get('/admin/comments');
 export const adminDeleteComment = (id: string) => api.delete(`/admin/comments/${id}`);
 export const adminGetResponses = () => api.get('/admin/responses');
+
+export const adminGetRounds = () => api.get('/admin/rounds');
+export const adminCreateRound = (image_id: string, day_offset = 0) =>
+  api.post('/admin/rounds', { image_id, day_offset });
+export const adminCloseRound = (id: string) => api.post(`/admin/rounds/${id}/close`);
+export const adminDeleteRound = (id: string) => api.delete(`/admin/rounds/${id}`);
 export const adminDeleteResponse = (id: string) => api.delete(`/admin/responses/${id}`);
 
 export const getMe = (token: string) =>

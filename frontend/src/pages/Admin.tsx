@@ -5,24 +5,30 @@ import {
   adminGetStats, adminGetImages, adminDeleteImage,
   adminGetUsers, adminGetComments, adminDeleteComment,
   adminGetResponses, adminDeleteResponse, IMAGE_URL,
+  adminGetRounds, adminCreateRound, adminCloseRound, adminDeleteRound,
 } from '../api';
 
-type Tab = 'dashboard' | 'images' | 'users' | 'comments' | 'responses';
+type Tab = 'dashboard' | 'rounds' | 'images' | 'users' | 'comments' | 'responses';
 
 interface Stats { images: number; users: number; comments: number; replies: number; responses: number; }
 interface AdminImage { id: string; filename: string; original_name: string; created_at: string; response_count: number; comment_count: number; }
 interface AdminUser { id: string; name: string; email: string; picture: string; created_at: string; comment_count: number; response_count: number; }
 interface AdminComment { id: string; nickname: string; text: string; created_at: string; image_id: string; image_name: string; user_email: string; parent_id: string | null; }
+interface AdminRound {
+  id: string; image_id: string; image_filename: string; image_name: string;
+  opens_at: string; closes_at: string; status: 'scheduled' | 'open' | 'closed';
+  winner_response_id: string | null; entry_count: number;
+}
 interface AdminResponse { id: string; type: 'ai' | 'user'; ai_text?: string; created_at: string; image_id: string; image_name: string; user_name: string; user_email: string; votes: number; }
 
-function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
+function ConfirmModal({ message, onConfirm, onCancel, confirmLabel = '삭제' }: { message: string; onConfirm: () => void; onCancel: () => void; confirmLabel?: string }) {
   return (
     <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', padding: '28px', width: '300px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <p style={{ margin: 0, fontSize: '15px', color: '#111827', textAlign: 'center', lineHeight: 1.6 }}>{message}</p>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={onCancel} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>취소</button>
-          <button onClick={onConfirm} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>삭제</button>
+          <button onClick={onConfirm} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#ef4444', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -40,7 +46,11 @@ export default function Admin() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [comments, setComments] = useState<AdminComment[]>([]);
   const [responses, setResponses] = useState<AdminResponse[]>([]);
-  const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
+  const [rounds, setRounds] = useState<AdminRound[]>([]);
+  const [pickedImage, setPickedImage] = useState<string | null>(null);
+  const [roundBusy, setRoundBusy] = useState(false);
+  const [roundError, setRoundError] = useState('');
+  const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void; confirmLabel?: string } | null>(null);
   const [tabLoaded, setTabLoaded] = useState<Set<Tab>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -51,6 +61,10 @@ export default function Admin() {
   useEffect(() => {
     if (tabLoaded.has(tab)) return;
     setTabLoaded(p => new Set(p).add(tab));
+    if (tab === 'rounds') {
+      adminGetRounds().then(r => setRounds(r.data)).catch(() => {});
+      adminGetImages().then(r => setImages(r.data)).catch(() => {});
+    }
     if (tab === 'images') adminGetImages().then(r => setImages(r.data)).catch(() => {});
     if (tab === 'users') adminGetUsers().then(r => setUsers(r.data)).catch(() => {});
     if (tab === 'comments') adminGetComments().then(r => setComments(r.data)).catch(() => {});
@@ -104,6 +118,34 @@ export default function Admin() {
       },
     });
   };
+
+  const reloadRounds = () => { adminGetRounds().then(r => setRounds(r.data)).catch(() => {}); };
+
+  const handleCreateRound = async (dayOffset: number) => {
+    if (!pickedImage) return;
+    setRoundBusy(true);
+    setRoundError('');
+    try {
+      await adminCreateRound(pickedImage, dayOffset);
+      setPickedImage(null);
+      reloadRounds();
+    } catch (err: unknown) {
+      setRoundError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? '라운드 등록에 실패했습니다');
+    } finally {
+      setRoundBusy(false);
+    }
+  };
+
+  const handleCloseRound = (r: AdminRound) => setConfirm({
+    message: '이 라운드를 지금 마감할까요?\n득표 1위가 우승으로 확정되고 되돌릴 수 없습니다.',
+    confirmLabel: '마감',
+    onConfirm: async () => { await adminCloseRound(r.id); reloadRounds(); setConfirm(null); },
+  });
+
+  const handleDeleteRound = (r: AdminRound) => setConfirm({
+    message: '예약된 라운드를 삭제할까요?',
+    onConfirm: async () => { await adminDeleteRound(r.id); reloadRounds(); setConfirm(null); },
+  });
 
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#6b7280' }}>로딩 중...</div>;
   if (!user) return (
@@ -173,6 +215,7 @@ export default function Admin() {
         <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', overflowX: 'auto' }}>
             <button style={tabStyle('dashboard')} onClick={() => changeTab('dashboard')}>대시보드</button>
+            <button style={tabStyle('rounds')} onClick={() => changeTab('rounds')}>라운드</button>
             <button style={tabStyle('images')} onClick={() => changeTab('images')}>이미지 {stats ? `(${stats.images})` : ''}</button>
             <button style={tabStyle('users')} onClick={() => changeTab('users')}>사용자 {stats ? `(${stats.users})` : ''}</button>
             <button style={tabStyle('comments')} onClick={() => changeTab('comments')}>댓글 {stats ? `(${stats.comments + stats.replies})` : ''}</button>
@@ -193,6 +236,102 @@ export default function Admin() {
                 </ul>
               </div>
             )}
+
+            {/* 라운드 */}
+            {tab === 'rounds' && (() => {
+              const badge = (st: AdminRound['status']) => st === 'open'
+                ? { bg: '#d1fae5', fg: '#065f46', label: '진행 중' }
+                : st === 'scheduled'
+                  ? { bg: '#fef3c7', fg: '#92400e', label: '예약됨' }
+                  : { bg: '#f3f4f6', fg: '#6b7280', label: '마감' };
+              const hasOpen = rounds.some(r => r.status === 'open');
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+
+                  <div>
+                    <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 700, color: '#111827' }}>라운드</h3>
+                    <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#6b7280' }}>
+                      한국 시간 매일 09:00 시작 → 21:00 마감. 진행 중인 라운드가 있으면 예약된 라운드는 그 뒤에 열립니다.
+                    </p>
+                    {rounds.length === 0 ? (
+                      <div style={{ padding: '28px', textAlign: 'center', color: '#9ca3af', fontSize: '13.5px', border: '1.5px dashed #e5e7eb', borderRadius: '10px' }}>
+                        아직 등록된 라운드가 없습니다. 아래에서 짤을 골라 첫 판을 열어보세요.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {rounds.map(r => {
+                          const b = badge(r.status);
+                          return (
+                            <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '10px 12px', background: '#fff' }}>
+                              <img src={IMAGE_URL(r.image_filename)} alt="" style={{ width: 64, height: 44, objectFit: 'cover', borderRadius: '6px', background: '#f3f4f6', flexShrink: 0 }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                                  <span style={{ background: b.bg, color: b.fg, fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px' }}>{b.label}</span>
+                                  <span style={{ fontSize: '13px', color: '#374151', fontWeight: 600 }}>멘트 {r.entry_count}개</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '3px' }}>
+                                  {fmtDate(r.opens_at)} → {fmtDate(r.closes_at)}
+                                </div>
+                              </div>
+                              {r.status === 'open' && (
+                                <button onClick={() => handleCloseRound(r)} style={{ ...delBtn, background: '#fef3c7', color: '#92400e' }}>지금 마감</button>
+                              )}
+                              {r.status === 'scheduled' && (
+                                <button onClick={() => handleDeleteRound(r)} style={delBtn}>예약 취소</button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 700, color: '#111827' }}>새 라운드 열기</h3>
+                    <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#6b7280' }}>짤을 하나 고르세요.</p>
+                    <div className="hover-scrollbar" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px', maxHeight: '340px', overflowY: 'auto', padding: '2px' }}>
+                      {images.map(img => {
+                        const on = pickedImage === img.id;
+                        return (
+                          <button
+                            key={img.id}
+                            onClick={() => setPickedImage(on ? null : img.id)}
+                            style={{
+                              padding: 0, cursor: 'pointer', borderRadius: '8px', overflow: 'hidden',
+                              border: on ? '3px solid #4338ca' : '1px solid #e5e7eb',
+                              background: '#f3f4f6', display: 'block', lineHeight: 0,
+                            }}
+                          >
+                            <img src={IMAGE_URL(img.filename)} alt={img.original_name} loading="lazy" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {roundError && <p style={{ margin: '12px 0 0', color: '#ef4444', fontSize: '13px', fontWeight: 600 }}>{roundError}</p>}
+
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => handleCreateRound(0)}
+                        disabled={!pickedImage || roundBusy}
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: !pickedImage || roundBusy ? '#d1d5db' : '#4338ca', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: !pickedImage || roundBusy ? 'not-allowed' : 'pointer' }}
+                      >
+                        {roundBusy ? '등록 중...' : '오늘 라운드로 열기'}
+                      </button>
+                      <button
+                        onClick={() => handleCreateRound(1)}
+                        disabled={!pickedImage || roundBusy}
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1.5px solid #e5e7eb', background: '#fff', color: '#374151', fontSize: '14px', fontWeight: 700, cursor: !pickedImage || roundBusy ? 'not-allowed' : 'pointer' }}
+                      >
+                        내일로 예약
+                      </button>
+                      {!pickedImage && <span style={{ fontSize: '12.5px', color: '#9ca3af' }}>짤을 먼저 선택하세요</span>}
+                      {pickedImage && hasOpen && <span style={{ fontSize: '12.5px', color: '#92400e' }}>진행 중인 라운드가 있어 마감 후 열립니다</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* 이미지 */}
             {tab === 'images' && (
@@ -382,7 +521,7 @@ export default function Admin() {
         </div>
       )}
 
-      {confirm && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={() => setConfirm(null)} />}
+      {confirm && <ConfirmModal message={confirm.message} confirmLabel={confirm.confirmLabel} onConfirm={confirm.onConfirm} onCancel={() => setConfirm(null)} />}
     </div>
   );
 }
