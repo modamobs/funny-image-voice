@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    * { box-sizing: border-box; }
+    a { color: #C9720C; text-decoration: none; }
+    a:hover { color: #96530A; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #FAF8F3; color: #12100E; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; overflow: hidden; display: flex; flex-direction: column;">
+
+  <!-- 상단 바 -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 18px 11px; border-bottom: 3px solid #12100E;">
+    <button aria-label="뒤로" style="width: 44px; height: 44px; margin-left: -10px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#12100E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"></path>
+      </svg>
+    </button>
+    <span style="font-family: 'Black Han Sans', sans-serif; font-size: 16px;">심사위원석</span>
+    <div style="width: 44px;"></div>
+  </div>
+
+  <!-- 내 멘트 -->
+  <div style="margin: 16px 18px 0; border: 2.5px solid #12100E; background: #FFFFFF; padding: 12px 13px; display: flex; align-items: center; gap: 12px;">
+    <button aria-label="내 멘트 듣기" style="width: 44px; height: 44px; border: 2.5px solid #12100E; background: #E8901C; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; padding: 0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#12100E"><path d="M8 5v14l11-7z"></path></svg>
+    </button>
+    <div style="flex: 1; min-width: 0;">
+      <div style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; color: #7A736A;">내가 남긴 멘트</div>
+      <div style="font-size: 13.5px; font-weight: 600; margin-top: 2px;">방금 올린 8초짜리</div>
+    </div>
+  </div>
+
+  <!-- 심사위원 고르기 -->
+  <div style="padding: 22px 18px 0;">
+    <div style="font-family: 'Black Han Sans', sans-serif; font-size: 14px; margin-bottom: 9px;">오늘의 심사위원</div>
+    <div style="display: flex; gap: 7px;">
+      <button onClick="{{ pick0 }}" style="flex: 1; border: 2.5px solid #12100E; background: {{ bg0 }}; padding: 9px 6px; cursor: pointer; font-family: 'IBM Plex Sans KR', sans-serif; font-size: 11.5px; font-weight: 700; line-height: 1.35; min-height: 56px; color: #12100E;">까칠한<br>평론가</button>
+      <button onClick="{{ pick1 }}" style="flex: 1; border: 2.5px solid #12100E; background: {{ bg1 }}; padding: 9px 6px; cursor: pointer; font-family: 'IBM Plex Sans KR', sans-serif; font-size: 11.5px; font-weight: 700; line-height: 1.35; min-height: 56px; color: #12100E;">뭐든<br>감동하는 분</button>
+      <button onClick="{{ pick2 }}" style="flex: 1; border: 2.5px solid #12100E; background: {{ bg2 }}; padding: 9px 6px; cursor: pointer; font-family: 'IBM Plex Sans KR', sans-serif; font-size: 11.5px; font-weight: 700; line-height: 1.35; min-height: 56px; color: #12100E;">정색하고<br>분석하는 분</button>
+    </div>
+  </div>
+
+  <!-- 심사 결과 -->
+  <div style="padding: 22px 18px 0; flex: 1;">
+    <sc-if value="{{ revealed }}" hint-placeholder-val="{{ true }}">
+      <div style="border: 3px solid #12100E; background: #141019; color: #FAF8F3; overflow: hidden; position: relative;">
+        <div style="position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 420px; height: 260px; background: radial-gradient(ellipse at 50% 0%, rgba(232,144,28,0.30) 0%, rgba(232,144,28,0) 70%); pointer-events: none;"></div>
+        <div style="position: relative; padding: 20px 18px 18px; text-align: center;">
+          <div style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #E8901C;">{{ judgeName }}의 채점</div>
+          <div style="display: flex; align-items: baseline; justify-content: center; gap: 3px; margin-top: 4px;">
+            <span style="font-family: 'Black Han Sans', sans-serif; font-size: 62px; line-height: 1; color: #E8901C; font-variant-numeric: tabular-nums;">{{ score }}</span>
+            <span style="font-family: 'Black Han Sans', sans-serif; font-size: 20px; color: #6E6678;">점</span>
+          </div>
+          <div style="height: 8px; background: #241E2E; margin-top: 14px; border: 1px solid #3A3246;">
+            <div style="height: 100%; width: {{ barWidth }}; background: #E8901C;"></div>
+          </div>
+          <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #2C2536; font-size: 14px; line-height: 1.6; color: #E8E2DA; text-wrap: pretty;">{{ comment }}</div>
+        </div>
+      </div>
+      <div style="margin-top: 12px; font-size: 11.5px; color: #7A736A; text-align: center;">점수는 재미를 위한 것이고 순위와는 상관없습니다</div>
+    </sc-if>
+
+    <sc-if value="{{ notRevealed }}" hint-placeholder-val="{{ false }}">
+      <div style="border: 2.5px dashed #DDD8CE; padding: 40px 20px; text-align: center;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C6BFB4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;">
+          <path d="M12 3v3"></path>
+          <path d="M6 6l1.8 1.8"></path>
+          <path d="M18 6l-1.8 1.8"></path>
+          <circle cx="12" cy="14" r="6"></circle>
+          <path d="M9.5 14l1.8 1.8 3.2-3.4"></path>
+        </svg>
+        <div style="font-size: 13.5px; color: #A79E92; line-height: 1.6;">심사위원을 고르고<br>채점을 받아보세요</div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- 액션 -->
+  <div style="padding: 18px 18px 24px;">
+    <button onClick="{{ onAct }}" style="width: 100%; height: 58px; border: 3px solid #12100E; background: {{ actBg }}; color: #12100E; font-family: 'Black Han Sans', sans-serif; font-size: 19px; cursor: pointer; box-shadow: 4px 4px 0 #12100E;">{{ actLabel }}</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { judge: 0, revealed: false };
+  }
+  pick(i) { this.setState({ judge: i, revealed: false }); }
+  renderVals() {
+    var self = this;
+    var judges = [
+      { name: '까칠한 평론가', score: 72, comment: '발상은 나쁘지 않았습니다. 다만 마지막 한 마디에서 힘이 빠졌어요. 거기서 멈췄으면 더 웃겼습니다.' },
+      { name: '뭐든 감동하는 분', score: 94, comment: '저는 여기서 조금 울었습니다. 목소리가 떨리는 부분에서 진심이 느껴졌어요. 진짜입니다.' },
+      { name: '정색하고 분석하는 분', score: 81, comment: '반전 구조 자체는 유효합니다. 다만 결정적 단어가 0.5초 늦게 나왔고, 그 사이에 긴장이 새어나갔습니다.' }
+    ];
+    var j = judges[this.state.judge];
+    var r = this.state.revealed;
+    var sel = this.state.judge;
+    return {
+      revealed: r,
+      notRevealed: !r,
+      judgeName: j.name,
+      score: j.score,
+      comment: j.comment,
+      barWidth: j.score + '%',
+      bg0: sel === 0 ? '#E8901C' : '#FFFFFF',
+      bg1: sel === 1 ? '#E8901C' : '#FFFFFF',
+      bg2: sel === 2 ? '#E8901C' : '#FFFFFF',
+      pick0: function () { self.pick(0); },
+      pick1: function () { self.pick(1); },
+      pick2: function () { self.pick(2); },
+      actLabel: r ? '다른 심사위원에게도 받기' : '심사받기',
+      actBg: r ? '#FFFFFF' : '#E8901C',
+      onAct: r
+        ? function () { self.setState({ judge: (sel + 1) % 3, revealed: true }); }
+        : function () { self.setState({ revealed: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

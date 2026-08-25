@@ -9,6 +9,11 @@ import TodayRound from '../components/TodayRound';
 // 백엔드에서 무료 제공을 중단한 기능. 다시 열 때 VITE_AI_IMAGE_ENABLED=true 로 켠다.
 const AI_IMAGE_ENABLED = import.meta.env.VITE_AI_IMAGE_ENABLED === 'true';
 
+const today = () => {
+  const d = new Date();
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+};
+
 export default function Home() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -69,32 +74,105 @@ export default function Home() {
     }
   };
 
+  const side = isMobile ? 18 : 56;
+
+  // 지면 위의 작은 보조 버튼 — 관리 · 로그아웃
+  const chip: React.CSSProperties = {
+    height: 40, padding: '0 12px', cursor: 'pointer',
+    border: '2px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)',
+    fontFamily: 'var(--body)', fontSize: '11.5px', fontWeight: 700,
+  };
+
+  // PC 에서는 오늘의 판 사이드 하단에, 폰에서는 CTA 아래에 붙는다
+  const uploadRow = (
+    <div style={{ marginTop: isMobile ? '16px' : 0 }}>
+      <div style={{ display: 'flex', gap: '9px' }}>
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading || generating}
+          style={{
+            flex: 1, height: isMobile ? 48 : 46, cursor: uploading || generating ? 'not-allowed' : 'pointer',
+            border: '2.5px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)',
+            fontFamily: 'var(--display)', fontSize: '15px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+            opacity: uploading ? 0.5 : 1,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="5" width="18" height="15" rx="1" />
+            <circle cx="12" cy="12" r="3.5" />
+            <path d="M8 5l1.5-2h5L16 5" />
+          </svg>
+          {uploading ? '올리는 중...' : '내 짤 올리기'}
+        </button>
+
+        {AI_IMAGE_ENABLED && (
+          <button
+            onClick={handleAiGenerate}
+            disabled={generating || uploading}
+            style={{
+              flex: 1, height: isMobile ? 48 : 46, cursor: generating || uploading ? 'not-allowed' : 'pointer',
+              border: '2.5px solid var(--ink)', background: 'var(--amber-tint)', color: 'var(--ink)',
+              fontFamily: 'var(--display)', fontSize: '15px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+              opacity: generating ? 0.5 : 1,
+            }}
+          >
+            {generating ? '만드는 중...' : 'AI로 만들기'}
+          </button>
+        )}
+      </div>
+      {genError && (
+        <p style={{ margin: '9px 0 0', color: '#C9302B', fontSize: '12.5px', fontWeight: 600 }}>{genError}</p>
+      )}
+    </div>
+  );
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
-      {/* 헤더 */}
-      <div style={{ background: '#4338ca', padding: isMobile ? '14px 16px' : '20px 24px', color: '#fff' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <div style={{ minWidth: 0 }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px', whiteSpace: 'nowrap' }}>🎤 이미지 개그 대결</h1>
-            {!isMobile && <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: '14px' }}>이미지를 올리고 웃긴 멘트를 달아보세요!</p>}
+    <div style={{ minHeight: '100vh', background: 'var(--paper)', color: 'var(--ink)', fontFamily: 'var(--body)' }}>
+
+      {/* 제호 */}
+      <div style={{ borderBottom: '3px solid var(--ink)' }}>
+        <div style={{
+          maxWidth: '1280px', margin: '0 auto', padding: `15px ${side}px 11px`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
+            <h1 style={{
+              margin: 0, fontFamily: 'var(--display)', fontWeight: 400,
+              fontSize: isMobile ? '18px' : '22px', letterSpacing: '-0.01em', whiteSpace: 'nowrap',
+            }}>
+              개그대결 호외
+            </h1>
+            <span style={{ fontSize: '10px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{today()}</span>
           </div>
+
           {!loading && (
             user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                <img src={user.picture} alt={user.name} onClick={() => navigate('/profile')} style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)', cursor: 'pointer', flexShrink: 0 }} />
-                {!isMobile && <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexShrink: 0 }}>
                 {user.is_admin && (
-                  <button onClick={() => navigate('/admin')} style={{ padding: '5px 10px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>
-                    🛠{!isMobile && ' 관리'}
-                  </button>
+                  <button onClick={() => navigate('/admin')} style={chip}>관리</button>
                 )}
-                <button onClick={logout} style={{ padding: '5px 10px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>
-                  {isMobile ? '로그아웃' : '로그아웃'}
-                </button>
+                <button onClick={logout} style={chip}>로그아웃</button>
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  onClick={() => navigate('/profile')}
+                  style={{
+                    width: 40, height: 40, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+                    border: '2.5px solid var(--ink)', background: 'var(--panel)',
+                  }}
+                />
               </div>
             ) : (
-              <button onClick={login} style={{ padding: '8px 16px', borderRadius: '20px', border: 'none', background: '#fff', color: '#4338ca', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14, height: 14 }} />
+              <button
+                onClick={login}
+                style={{
+                  ...chip, height: 44, background: 'var(--amber)', fontSize: '12.5px',
+                  display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                }}
+              >
+                <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 13, height: 13 }} />
                 Google 로그인
               </button>
             )
@@ -103,112 +181,72 @@ export default function Home() {
       </div>
 
       {/* 오늘의 짤 — 하루 한 판, 모두가 같은 이미지에 멘트를 단다 */}
-      <TodayRound isMobile={isMobile} />
+      <TodayRound isMobile={isMobile}>{uploadRow}</TodayRound>
 
-      {/* 업로드 / AI 생성 버튼 */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: isMobile ? '20px 16px 12px' : '32px 16px 16px' }}>
-        <div style={{ display: 'flex', gap: '10px', width: isMobile ? '100%' : 'auto', flexWrap: isMobile ? undefined : 'wrap', justifyContent: 'center' }}>
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading || generating}
-            style={{
-              padding: isMobile ? '13px 0' : '14px 32px',
-              flex: isMobile ? 1 : undefined,
-              borderRadius: '50px', border: 'none',
-              background: uploading ? '#9ca3af' : '#6366f1', color: '#fff',
-              fontSize: '15px', cursor: uploading || generating ? 'not-allowed' : 'pointer',
-              fontWeight: 700, boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
-            }}
-          >
-            {uploading ? '업로드 중...' : '📸 이미지 올리기'}
-          </button>
-
-          {AI_IMAGE_ENABLED && (
-            <button
-              onClick={handleAiGenerate}
-              disabled={generating || uploading}
-              style={{
-                padding: isMobile ? '13px 0' : '14px 32px',
-                flex: isMobile ? 1 : undefined,
-                borderRadius: '50px', border: 'none',
-                background: generating ? '#9ca3af' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                color: '#fff', fontSize: '15px',
-                cursor: generating || uploading ? 'not-allowed' : 'pointer',
-                fontWeight: 700, boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              }}
-            >
-              {generating ? (
-                <>
-                  <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  생성 중...
-                </>
-              ) : '🤖 AI 이미지 생성'}
-            </button>
-          )}
-        </div>
-        {genError && (
-          <p style={{ margin: 0, color: '#ef4444', fontSize: '13px', fontWeight: 600 }}>{genError}</p>
-        )}
-      </div>
       <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
 
-      {/* AI 이미지 미리보기 모달 */}
+      {/* AI 이미지 미리보기 */}
       {preview && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, padding: '20px' }}>
-          <div style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', maxWidth: '480px', width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}>
-            <img src={IMAGE_URL(preview.filename)} alt="AI 생성 이미지" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
-            <div style={{ padding: '20px 24px 24px' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={handleAiConfirm}
-                  disabled={confirming}
-                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: confirming ? '#9ca3af' : '#6366f1', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: confirming ? 'not-allowed' : 'pointer' }}
-                >
-                  {confirming ? '올리는 중...' : '✅ 올리기'}
-                </button>
-                <button
-                  onClick={handleAiGenerate}
-                  disabled={generating || confirming}
-                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: '15px', fontWeight: 700, cursor: generating || confirming ? 'not-allowed' : 'pointer' }}
-                >
-                  {generating ? '생성 중...' : '🔄 다시 생성'}
-                </button>
-                <button
-                  onClick={() => setPreview(null)}
-                  disabled={confirming}
-                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#9ca3af', fontSize: '15px', cursor: 'pointer' }}
-                >
-                  ✕
-                </button>
-              </div>
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(18,16,14,0.78)', zIndex: 500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+        }}>
+          <div style={{ background: 'var(--panel)', border: '3px solid var(--ink)', maxWidth: '440px', width: '100%', boxShadow: '6px 6px 0 var(--ink)' }}>
+            <img src={IMAGE_URL(preview.filename)} alt="AI 생성 이미지" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', borderBottom: '3px solid var(--ink)' }} />
+            <div style={{ padding: '14px', display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handleAiConfirm}
+                disabled={confirming}
+                style={{ flex: 2, height: 46, border: '2.5px solid var(--ink)', background: 'var(--amber)', color: 'var(--ink)', fontFamily: 'var(--display)', fontSize: '15px', cursor: confirming ? 'not-allowed' : 'pointer' }}
+              >
+                {confirming ? '올리는 중...' : '올리기'}
+              </button>
+              <button
+                onClick={handleAiGenerate}
+                disabled={generating || confirming}
+                style={{ flex: 1, height: 46, border: '2.5px solid var(--ink)', background: 'var(--panel)', color: 'var(--ink)', fontFamily: 'var(--display)', fontSize: '15px', cursor: 'pointer' }}
+              >
+                {generating ? '...' : '다시'}
+              </button>
+              <button
+                onClick={() => setPreview(null)}
+                disabled={confirming}
+                style={{ width: 46, height: 46, border: '2.5px solid var(--ink)', background: 'var(--panel)', color: 'var(--muted)', fontSize: '16px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 지난 짤 그리드 */}
-      {images.length > 0 && (
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '4px 16px 0' : '8px 24px 0' }}>
-          <h2 style={{ margin: 0, fontSize: isMobile ? '15px' : '17px', fontWeight: 700, color: '#374151' }}>
-            지난 짤
-          </h2>
+      {/* 지난 짤 */}
+      <div style={{ maxWidth: isMobile ? '560px' : '1280px', margin: '0 auto', padding: `30px ${side}px 0` }}>
+        <div style={{ borderBottom: '2.5px solid var(--ink)', paddingBottom: '6px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: 'var(--display)', fontSize: '16px' }}>지난 짤</span>
+          <span style={{ fontSize: '11px', color: 'var(--muted)' }}>{images.length}개</span>
         </div>
-      )}
+      </div>
+
       {images.length === 0 ? (
-        <div style={{ textAlign: 'center', color: '#9ca3af', padding: '60px 0' }}>
-          <p style={{ fontSize: '48px', margin: 0 }}>🖼</p>
-          <p>아직 이미지가 없어요. 첫 번째로 올려보세요!</p>
+        <div style={{ textAlign: 'center', color: 'var(--faint)', padding: '48px 0 60px', fontSize: '13.5px' }}>
+          아직 지난 짤이 없어요
         </div>
       ) : (
         <div
-          style={{
-            columnWidth: isMobile ? undefined : '240px',
-            columnCount: isMobile ? 2 : undefined,
-            columnGap: isMobile ? '12px' : '16px',
-            padding: isMobile ? '12px 12px 40px' : '16px 24px 40px',
-            maxWidth: '1100px',
+          style={isMobile ? {
+            columnCount: 2,
+            columnGap: '10px',
+            maxWidth: '560px',
             margin: '0 auto',
+            padding: `14px ${side}px 44px`,
+          } : {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: '14px',
+            maxWidth: '1280px',
+            margin: '0 auto',
+            padding: `14px ${side}px 44px`,
           }}
         >
           {images.map((img) => (
@@ -217,33 +255,36 @@ export default function Home() {
               onClick={() => navigate(`/image/${img.id}`)}
               style={{
                 breakInside: 'avoid',
-                marginBottom: isMobile ? '12px' : '16px',
-                background: '#fff',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                marginBottom: isMobile ? '10px' : 0,
+                background: 'var(--panel)',
+                border: '2.5px solid var(--ink)',
                 cursor: 'pointer',
-                transition: 'transform 0.15s, box-shadow 0.15s',
+                transition: 'transform 0.12s, box-shadow 0.12s',
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
-                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.14)';
+                (e.currentTarget as HTMLDivElement).style.transform = 'translate(-3px, -3px)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '5px 5px 0 var(--ink)';
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)';
+                (e.currentTarget as HTMLDivElement).style.transform = 'translate(0, 0)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
               }}
             >
               <img
                 src={IMAGE_URL(img.filename)}
                 alt={img.original_name}
                 loading="lazy"
-                style={{ width: '100%', display: 'block' }}
+                style={{ width: '100%', display: 'block', borderBottom: '2.5px solid var(--ink)' }}
               />
-              <div style={{ padding: '10px 16px' }}>
-                <p style={{ margin: 0, color: '#6b7280', fontSize: '13px' }}>
-                  🎙 멘트 {img.response_count ?? 0}개
-                </p>
+              <div style={{ padding: '8px 11px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2.4" strokeLinecap="round">
+                  <rect x="9" y="2" width="6" height="11" rx="3" />
+                  <path d="M5 10a7 7 0 0 0 14 0" />
+                  <path d="M12 17v4" />
+                </svg>
+                <span style={{ color: 'var(--muted)', fontSize: '12.5px', fontWeight: 600 }}>
+                  멘트 {img.response_count ?? 0}개
+                </span>
               </div>
             </div>
           ))}

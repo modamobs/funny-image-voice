@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #2B5CE6; text-decoration: none; }
+    a:hover { color: #1A3FAF; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #FFFDF6; color: #0A0A0A; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; overflow: hidden; display: flex; flex-direction: column; position: relative;">
+
+  <!-- 헤더 -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px;">
+    <div style="display: flex; align-items: center; gap: 7px;">
+      <div style="width: 26px; height: 26px; border: 2.5px solid #0A0A0A; background: #FFD400; display: flex; align-items: center; justify-content: center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" stroke-width="2.6" stroke-linecap="round">
+          <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+          <path d="M5 10a7 7 0 0 0 14 0"></path>
+          <path d="M12 17v4"></path>
+        </svg>
+      </div>
+      <span style="font-family: 'Jua', sans-serif; font-size: 17px;">개그대결</span>
+    </div>
+    <div style="width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid #0A0A0A; background: #FFFDF6;"></div>
+  </div>
+
+  <!-- 타이틀 컷 -->
+  <div style="margin: 0 18px; border: 3px solid #0A0A0A; background: #FFD400; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+    <div>
+      <div style="font-family: 'Jua', sans-serif; font-size: 26px; line-height: 1.1;">오늘의 짤</div>
+      <div style="font-size: 11.5px; font-weight: 600; margin-top: 2px;">웃긴 멘트 달고 1등 먹기</div>
+    </div>
+    <div style="border: 2.5px solid #0A0A0A; background: #FFFDF6; padding: 5px 9px; text-align: center; flex-shrink: 0;">
+      <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.08em;">마감</div>
+      <div style="font-family: 'Jua', sans-serif; font-size: 17px; line-height: 1.1; font-variant-numeric: tabular-nums;">04:12</div>
+    </div>
+  </div>
+
+  <!-- 짤 컷 -->
+  <div style="margin: 10px 18px 0; border: 3px solid #0A0A0A; background: #FFFFFF; position: relative;">
+    <svg viewBox="0 0 344 200" style="display: block; width: 100%; height: 200px;">
+      <defs>
+        <pattern id="dots" width="7" height="7" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1.5" fill="#0A0A0A" opacity="0.16"></circle>
+        </pattern>
+      </defs>
+      <rect width="344" height="200" fill="#FFFFFF"></rect>
+      <rect width="344" height="200" fill="url(#dots)"></rect>
+      <circle cx="172" cy="104" r="60" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="3"></circle>
+      <path d="M131 68 L122 42 L152 58 Z" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="3" stroke-linejoin="round"></path>
+      <path d="M213 68 L222 42 L192 58 Z" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="3" stroke-linejoin="round"></path>
+      <circle cx="152" cy="95" r="9" fill="#0A0A0A"></circle>
+      <circle cx="192" cy="95" r="9" fill="#0A0A0A"></circle>
+      <ellipse cx="172" cy="120" rx="10" ry="7" fill="#0A0A0A"></ellipse>
+      <path d="M172 127 q0 16 -16 18" stroke="#0A0A0A" stroke-width="3.5" fill="none" stroke-linecap="round"></path>
+      <rect x="112" y="158" width="120" height="28" fill="#2B5CE6"></rect>
+    </svg>
+    <!-- 말풍선 -->
+    <div style="position: absolute; right: -4px; top: -12px; background: #FFFDF6; border: 2.5px solid #0A0A0A; padding: 5px 10px; font-family: 'Jua', sans-serif; font-size: 12px; transform: rotate(3deg);">멘트 24개!</div>
+  </div>
+
+  <!-- 순위 컷 -->
+  <div style="margin: 12px 18px 0; display: flex; flex-direction: column; gap: 7px;">
+    <div style="font-family: 'Jua', sans-serif; font-size: 14px;">지금 제일 웃긴 셋</div>
+
+    <div style="display: flex; align-items: center; gap: 10px; border: 2.5px solid #0A0A0A; background: #FFD400; padding: 8px 11px;">
+      <span style="font-family: 'Jua', sans-serif; font-size: 18px; width: 15px;">1</span>
+      <button style="width: 28px; height: 28px; border: 2.5px solid #0A0A0A; background: #FFFDF6; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="#0A0A0A"><path d="M8 5v14l11-7z"></path></svg>
+      </button>
+      <span style="flex: 1; font-size: 13.5px; font-weight: 600;">개그왕김씨</span>
+      <span style="font-family: 'Jua', sans-serif; font-size: 15px; font-variant-numeric: tabular-nums;">142</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; border: 2.5px solid #0A0A0A; background: #FFFDF6; padding: 8px 11px;">
+      <span style="font-family: 'Jua', sans-serif; font-size: 18px; width: 15px; color: #7A7A72;">2</span>
+      <button style="width: 28px; height: 28px; border: 2.5px solid #0A0A0A; background: #FFFDF6; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="#0A0A0A"><path d="M8 5v14l11-7z"></path></svg>
+      </button>
+      <span style="flex: 1; font-size: 13.5px; font-weight: 600;">무명의연예인</span>
+      <span style="font-family: 'Jua', sans-serif; font-size: 15px; font-variant-numeric: tabular-nums;">98</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; border: 2.5px solid #0A0A0A; background: #FFFDF6; padding: 8px 11px;">
+      <span style="font-family: 'Jua', sans-serif; font-size: 18px; width: 15px; color: #7A7A72;">3</span>
+      <button style="width: 28px; height: 28px; border: 2.5px solid #0A0A0A; background: #FFFDF6; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="#0A0A0A"><path d="M8 5v14l11-7z"></path></svg>
+      </button>
+      <span style="flex: 1; font-size: 13.5px; font-weight: 600;">조용한관객</span>
+      <span style="font-family: 'Jua', sans-serif; font-size: 15px; font-variant-numeric: tabular-nums;">61</span>
+    </div>
+  </div>
+
+  <!-- 지난 컷 -->
+  <div style="margin: 14px 0 0 18px; margin-top: auto; padding-top: 14px;">
+    <div style="font-family: 'Jua', sans-serif; font-size: 13px; margin-bottom: 8px;">지난 컷</div>
+    <div style="display: flex; gap: 8px;">
+      <div style="width: 66px; height: 50px; border: 2.5px solid #0A0A0A; background: #FFFFFF; flex-shrink: 0;"></div>
+      <div style="width: 66px; height: 50px; border: 2.5px solid #0A0A0A; background: #FFFFFF; flex-shrink: 0;"></div>
+      <div style="width: 66px; height: 50px; border: 2.5px solid #0A0A0A; background: #FFFFFF; flex-shrink: 0;"></div>
+      <div style="width: 66px; height: 50px; border: 2.5px solid #0A0A0A; background: #FFFFFF; flex-shrink: 0;"></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="padding: 16px 18px 26px;">
+    <button style="width: 100%; height: 54px; border: 3px solid #0A0A0A; background: #2B5CE6; color: #FFFDF6; font-family: 'Jua', sans-serif; font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 4px 4px 0 #0A0A0A;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFDF6" stroke-width="2.6" stroke-linecap="round">
+        <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+        <path d="M5 10a7 7 0 0 0 14 0"></path>
+        <path d="M12 17v4"></path>
+      </svg>
+      멘트 남기기
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

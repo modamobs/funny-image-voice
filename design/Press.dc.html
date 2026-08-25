@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #CC2B1F; text-decoration: none; }
+    a:hover { color: #A61F15; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #F7F4EE; color: #141210; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; overflow: hidden; display: flex; flex-direction: column;">
+
+  <!-- 제호 -->
+  <div style="padding: 16px 20px 10px; border-bottom: 3px solid #141210; display: flex; align-items: flex-end; justify-content: space-between;">
+    <div style="font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 21px; letter-spacing: -0.03em;">개그대결신문</div>
+    <div style="font-size: 10px; color: #6B655C; letter-spacing: 0.06em; padding-bottom: 4px;">제 128호 · 8월 25일</div>
+  </div>
+
+  <!-- 호외 헤드라인 -->
+  <div style="padding: 16px 20px 0;">
+    <div style="display: inline-block; background: #CC2B1F; color: #F7F4EE; font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 12px; padding: 3px 9px; letter-spacing: 0.14em; transform: rotate(-1.5deg);">호외</div>
+    <h1 style="margin: 9px 0 0; font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 34px; line-height: 1.14; letter-spacing: -0.035em; text-wrap: balance;">오늘의 짤,<br>웃길 사람 구함</h1>
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 9px; border-top: 1px solid #D6D0C4;">
+      <span style="font-size: 11px; color: #6B655C;">마감</span>
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 19px; color: #CC2B1F; font-variant-numeric: tabular-nums; letter-spacing: -0.01em;">04:12:37</span>
+      <span style="margin-left: auto; font-size: 11px; color: #6B655C;">응모 <b style="color: #141210; font-weight: 700;">24</b>건</span>
+    </div>
+  </div>
+
+  <!-- 짤 (사진 자리) -->
+  <div style="margin: 14px 20px 0; border: 1px solid #141210; background: #EDE8DE;">
+    <svg viewBox="0 0 348 196" style="display: block; width: 100%; height: 196px;">
+      <rect width="348" height="196" fill="#EDE8DE"></rect>
+      <circle cx="174" cy="100" r="58" fill="none" stroke="#141210" stroke-width="2"></circle>
+      <path d="M134 66 L126 42 L154 57 Z" fill="none" stroke="#141210" stroke-width="2"></path>
+      <path d="M214 66 L222 42 L194 57 Z" fill="none" stroke="#141210" stroke-width="2"></path>
+      <circle cx="155" cy="92" r="8" fill="#141210"></circle>
+      <circle cx="193" cy="92" r="8" fill="#141210"></circle>
+      <ellipse cx="174" cy="116" rx="9" ry="6" fill="#141210"></ellipse>
+      <path d="M174 122 q0 15 -15 17" stroke="#141210" stroke-width="3" fill="none" stroke-linecap="round"></path>
+      <rect x="120" y="152" width="108" height="26" fill="#CC2B1F"></rect>
+    </svg>
+    <div style="border-top: 1px solid #141210; padding: 7px 10px; font-family: 'Nanum Myeongjo', serif; font-size: 11.5px; color: #4A453D;">사진 = 오늘의 출제 짤. 설명은 각자의 몫.</div>
+  </div>
+
+  <!-- 중간 집계 -->
+  <div style="padding: 16px 20px 0; display: flex; flex-direction: column; gap: 0;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid #141210; padding-bottom: 6px; margin-bottom: 2px;">
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 15px;">중간 집계</span>
+      <span style="font-size: 10.5px; color: #6B655C;">본지 자체 조사</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px dotted #C6C0B4;">
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 16px; color: #CC2B1F; width: 14px;">1</span>
+      <button style="width: 26px; height: 26px; border: 1px solid #141210; background: #141210; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#F7F4EE"><path d="M8 5v14l11-7z"></path></svg>
+      </button>
+      <span style="flex: 1; font-size: 13.5px;">개그왕김씨</span>
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;">142</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px dotted #C6C0B4;">
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 16px; color: #9A9488; width: 14px;">2</span>
+      <button style="width: 26px; height: 26px; border: 1px solid #141210; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#141210"><path d="M8 5v14l11-7z"></path></svg>
+      </button>
+      <span style="flex: 1; font-size: 13.5px;">무명의연예인</span>
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;">98</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px dotted #C6C0B4;">
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 16px; color: #9A9488; width: 14px;">3</span>
+      <button style="width: 26px; height: 26px; border: 1px solid #141210; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#141210"><path d="M8 5v14l11-7z"></path></svg>
+      </button>
+      <span style="flex: 1; font-size: 13.5px;">조용한관객</span>
+      <span style="font-family: 'Nanum Myeongjo', serif; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;">61</span>
+    </div>
+  </div>
+
+  <!-- 지난 호 -->
+  <div style="padding: 16px 20px 0; margin-top: auto;">
+    <div style="font-family: 'Nanum Myeongjo', serif; font-weight: 700; font-size: 12px; color: #6B655C; margin-bottom: 8px;">지난 호</div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px;">
+      <div style="height: 48px; border: 1px solid #C6C0B4; background: #EDE8DE;"></div>
+      <div style="height: 48px; border: 1px solid #C6C0B4; background: #EDE8DE;"></div>
+      <div style="height: 48px; border: 1px solid #C6C0B4; background: #EDE8DE;"></div>
+      <div style="height: 48px; border: 1px solid #C6C0B4; background: #EDE8DE;"></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="padding: 16px 20px 26px;">
+    <button style="width: 100%; height: 52px; border: none; background: #CC2B1F; color: #F7F4EE; font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 18px; letter-spacing: 0.02em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F7F4EE" stroke-width="2.4" stroke-linecap="round">
+        <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+        <path d="M5 10a7 7 0 0 0 14 0"></path>
+        <path d="M12 17v4"></path>
+      </svg>
+      응모하기
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

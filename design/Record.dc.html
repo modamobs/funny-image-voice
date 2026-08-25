@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    * { box-sizing: border-box; }
+    a { color: #C9720C; text-decoration: none; }
+    a:hover { color: #96530A; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #FAF8F3; color: #12100E; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; overflow: hidden; display: flex; flex-direction: column;">
+
+  <!-- 상단 바 -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 18px 11px; border-bottom: 3px solid #12100E;">
+    <button aria-label="뒤로" style="width: 44px; height: 44px; margin-left: -10px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#12100E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"></path>
+      </svg>
+    </button>
+    <span style="font-family: 'Black Han Sans', sans-serif; font-size: 16px;">오늘의 짤에 한마디</span>
+    <div style="display: flex; align-items: center; gap: 5px; border: 2.5px solid #12100E; background: #FFFFFF; padding: 3px 8px;">
+      <span style="width: 6px; height: 6px; border-radius: 50%; background: #C9720C;"></span>
+      <span style="font-size: 11px; font-weight: 700; color: #C9720C; font-variant-numeric: tabular-nums;">04:12:37</span>
+    </div>
+  </div>
+
+  <!-- 무대 위의 짤 -->
+  <div style="margin: 16px 18px 0; border: 3px solid #12100E; background: #141019; overflow: hidden; position: relative;">
+    <div style="position: absolute; top: -110px; left: 50%; transform: translateX(-50%); width: 500px; height: 340px; background: radial-gradient(ellipse at 50% 0%, rgba(232,144,28,0.36) 0%, rgba(232,144,28,0.09) 46%, rgba(232,144,28,0) 72%); pointer-events: none;"></div>
+    <svg viewBox="0 0 348 244" style="display: block; width: 100%; height: 244px; position: relative;">
+      <circle cx="174" cy="122" r="68" fill="#241E2E"></circle>
+      <path d="M127 82 L117 52 L151 70 Z" fill="#241E2E"></path>
+      <path d="M221 82 L231 52 L197 70 Z" fill="#241E2E"></path>
+      <circle cx="152" cy="111" r="11" fill="#FAF8F3"></circle>
+      <circle cx="196" cy="111" r="11" fill="#FAF8F3"></circle>
+      <circle cx="154" cy="114" r="5" fill="#141019"></circle>
+      <circle cx="198" cy="114" r="5" fill="#141019"></circle>
+      <ellipse cx="174" cy="141" rx="12" ry="8" fill="#141019"></ellipse>
+      <path d="M174 149 q0 18 -18 20" stroke="#141019" stroke-width="4.5" fill="none" stroke-linecap="round"></path>
+      <rect x="118" y="182" width="112" height="32" rx="2" fill="#E8901C"></rect>
+    </svg>
+  </div>
+
+  <!-- 상태 -->
+  <div style="padding: 22px 18px 0; text-align: center;">
+    <div style="font-size: 13.5px; color: #7A736A; min-height: 20px;">{{ status }}</div>
+    <div style="font-family: 'Black Han Sans', sans-serif; font-size: 46px; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; color: {{ timeColor }};">{{ time }}</div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 3px; height: 26px; margin-top: 4px;">
+      <div style="width: 3px; height: {{ bar1 }}; background: {{ waveColor }};"></div>
+      <div style="width: 3px; height: {{ bar2 }}; background: {{ waveColor }};"></div>
+      <div style="width: 3px; height: {{ bar3 }}; background: {{ waveColor }};"></div>
+      <div style="width: 3px; height: {{ bar4 }}; background: {{ waveColor }};"></div>
+      <div style="width: 3px; height: {{ bar3 }}; background: {{ waveColor }};"></div>
+      <div style="width: 3px; height: {{ bar2 }}; background: {{ waveColor }};"></div>
+      <div style="width: 3px; height: {{ bar1 }}; background: {{ waveColor }};"></div>
+    </div>
+  </div>
+
+  <!-- 녹음 버튼 -->
+  <div style="display: flex; flex-direction: column; align-items: center; padding: 18px 18px 0; margin-top: auto;">
+    <button onClick="{{ onRec }}" aria-label="{{ recLabel }}" style="width: 96px; height: 96px; border-radius: 50%; border: 3px solid #12100E; background: {{ recBg }}; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; box-shadow: 5px 5px 0 #12100E;">
+      <sc-if value="{{ isRec }}" hint-placeholder-val="{{ false }}">
+        <span style="width: 28px; height: 28px; background: #FAF8F3;"></span>
+      </sc-if>
+      <sc-if value="{{ notRec }}" hint-placeholder-val="{{ true }}">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#12100E" stroke-width="2.4" stroke-linecap="round">
+          <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+          <path d="M5 10a7 7 0 0 0 14 0"></path>
+          <path d="M12 17v4"></path>
+        </svg>
+      </sc-if>
+    </button>
+    <div style="font-size: 12px; color: #7A736A; margin-top: 10px;">{{ hint }}</div>
+  </div>
+
+  <!-- 완료 후 액션 -->
+  <div style="padding: 18px 18px 24px;">
+    <sc-if value="{{ isDone }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; gap: 9px;">
+        <button onClick="{{ onReset }}" style="flex: 1; height: 54px; border: 3px solid #12100E; background: #FFFFFF; color: #12100E; font-family: 'Black Han Sans', sans-serif; font-size: 16px; cursor: pointer;">다시 녹음</button>
+        <button style="flex: 2; height: 54px; border: 3px solid #12100E; background: #E8901C; color: #12100E; font-family: 'Black Han Sans', sans-serif; font-size: 17px; cursor: pointer; box-shadow: 4px 4px 0 #12100E;">올리기</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notDone }}" hint-placeholder-val="{{ false }}">
+      <div style="height: 54px; display: flex; align-items: center; justify-content: center; border: 2.5px dashed #DDD8CE; font-size: 12.5px; color: #A79E92;">녹음을 마치면 올릴 수 있어요</div>
+    </sc-if>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { phase: 'idle', secs: 0 };
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+  start() {
+    clearInterval(this._t);
+    this.setState({ phase: 'recording', secs: 0 });
+    this._t = setInterval(() => {
+      this.setState(function (s) {
+        if (s.secs >= 15) return null;
+        return { secs: s.secs + 1 };
+      });
+    }, 1000);
+  }
+  stop() { clearInterval(this._t); this.setState({ phase: 'done' }); }
+  reset() { clearInterval(this._t); this.setState({ phase: 'idle', secs: 0 }); }
+  renderVals() {
+    var phase = this.state.phase;
+    var secs = this.state.secs;
+    var mm = String(Math.floor(secs / 60));
+    var ss = String(secs % 60);
+    if (mm.length < 2) mm = '0' + mm;
+    if (ss.length < 2) ss = '0' + ss;
+    var rec = phase === 'recording';
+    var done = phase === 'done';
+    var self = this;
+    var amp = rec ? (secs % 3) : 0;
+    return {
+      isRec: rec,
+      notRec: !rec,
+      isDone: done,
+      notDone: !done,
+      time: mm + ':' + ss,
+      timeColor: rec ? '#C9720C' : (done ? '#12100E' : '#C6BFB4'),
+      waveColor: rec ? '#E8901C' : '#DDD8CE',
+      bar1: rec ? (8 + amp * 4) + 'px' : '6px',
+      bar2: rec ? (16 - amp * 3) + 'px' : '6px',
+      bar3: rec ? (22 + amp * 2) + 'px' : '6px',
+      bar4: rec ? (26 - amp * 5) + 'px' : '6px',
+      status: phase === 'idle' ? '버튼을 누르고 15초 안에 웃겨보세요'
+            : rec ? '녹음 중 · 다시 누르면 끝납니다'
+            : '들어보고 마음에 들면 올리세요',
+      hint: phase === 'idle' ? '한 번만 참여할 수 있어요' : (rec ? '최대 15초' : '15초 이내'),
+      recLabel: rec ? '녹음 정지' : '녹음 시작',
+      recBg: rec ? '#C9302B' : '#E8901C',
+      onRec: rec ? function () { self.stop(); } : function () { self.start(); },
+      onReset: function () { self.reset(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

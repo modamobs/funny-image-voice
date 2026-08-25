@@ -1,4 +1,19 @@
 :root {
+  /* 디자인 토큰 — 밝은 지면 위에 짤만 어두운 무대로 올린다 */
+  --paper: #FAF8F3;
+  --panel: #FFFFFF;
+  --ink: #12100E;
+  --muted: #7A736A;
+  --faint: #A79E92;
+  --hairline: #DDD8CE;
+  --stage: #141019;
+  --stage-2: #241E2E;
+  --amber: #E8901C;
+  --amber-deep: #C9720C;
+  --amber-tint: #FFF5E4;
+  --display: 'Black Han Sans', system-ui, sans-serif;
+  --body: 'IBM Plex Sans KR', system-ui, 'Segoe UI', sans-serif;
+
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -11,7 +26,7 @@
 
 body {
   margin: 0;
-  background: #f9fafb;
+  background: var(--paper);
 }
 
 #root {
